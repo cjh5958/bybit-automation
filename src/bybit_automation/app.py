@@ -20,6 +20,8 @@ class RuntimeReport:
     risk_decisions: tuple[RiskDecision, ...]
     order_results: tuple[OrderResult, ...]
     safe_mode: bool
+    ran_risk: bool
+    ran_strategy: bool
 
 
 class BotRuntime:
@@ -43,17 +45,25 @@ class BotRuntime:
             executor=self.exchange,
         )
 
-    def run_once(self) -> RuntimeReport:
+    def run_once(
+        self,
+        *,
+        include_risk: bool = True,
+        include_strategy: bool = True,
+    ) -> RuntimeReport:
         configure_logging(self.config.app.log_level)
 
         current_positions = self.exchange.fetch_positions()
         self.positions.sync_positions(current_positions)
 
-        risk_decisions = self._evaluate_risk(current_positions)
-        order_results = self._execute_risk_orders(risk_decisions)
+        risk_decisions: list[RiskDecision] = []
+        order_results: list[OrderResult] = []
+        if include_risk:
+            risk_decisions = self._evaluate_risk(current_positions)
+            order_results = self._execute_risk_orders(risk_decisions)
 
         strategy_decisions: list[StrategyDecision] = []
-        if not self.state.safe_mode:
+        if include_strategy and not self.state.safe_mode:
             strategy_decisions = self._evaluate_strategy(current_positions)
 
         return RuntimeReport(
@@ -62,6 +72,8 @@ class BotRuntime:
             risk_decisions=tuple(risk_decisions),
             order_results=tuple(order_results),
             safe_mode=self.state.safe_mode,
+            ran_risk=include_risk,
+            ran_strategy=include_strategy and not self.state.safe_mode,
         )
 
     def _evaluate_risk(self, positions: list[Position]) -> list[RiskDecision]:

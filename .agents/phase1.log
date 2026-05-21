@@ -120,3 +120,22 @@
   - `uv run ruff check .` passed.
   - `uv run bybit-automation` passed.
   - `uv run python -m bybit_automation` passed.
+- Started the final Phase 1 scheduling slice with a clean `dev` worktree.
+- Added `CadenceScheduler` and `ScheduledRuntime`:
+  - risk and strategy cadences are tracked independently,
+  - the first scheduled tick runs both tasks,
+  - later ticks can run risk-only, strategy-only, or no work,
+  - no live exchange access is required for scheduler tests.
+- Updated `BotRuntime.run_once()` to accept `include_risk` and
+  `include_strategy` flags and report which paths ran.
+- Verification after the scheduling slice:
+  - `uv run pytest` passed with 29 tests.
+  - `uv run ruff check .` passed.
+  - `uv run bybit-automation` passed and stayed in dry-run mode.
+- Phase 1 is now functionally complete according to `.agents/TODO.md`.
+- Real exchange testing plan:
+  - do not connect during Phase 1 completion,
+  - after review, add a read-only `check-exchange` smoke test,
+  - request fresh Bybit demo API credentials only when running that smoke test,
+  - delay real order-placement checks until after SQLite/reconciliation/safe-mode
+    work is in place.
