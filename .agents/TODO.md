@@ -20,22 +20,23 @@ Rules:
 - [x] Document config specification in `.agents/SPEC.md`.
 - [x] Move agent-facing documentation under `.agents/`.
 - [x] Create shared agent TODO list.
+- [x] Complete Phase 0 project foundation with `uv`.
 
 ## Phase 0: Project Foundation with `uv`
 
-- [ ] Inspect current development environment at session start.
-- [ ] Confirm current git branch is `dev` or the user-approved working branch.
-- [ ] Add `pyproject.toml`.
-- [ ] Add `uv.lock`.
-- [ ] Add `src/bybit_stream_bot/` package skeleton.
-- [ ] Add a safe no-op CLI entry point.
-- [ ] Add `configs/config.template.toml` based on `.agents/SPEC.md`.
-- [ ] Add baseline tests that do not require Bybit credentials.
-- [ ] Add or update `.gitignore` entries for local config, SQLite data, caches,
+- [x] Inspect current development environment at session start.
+- [x] Confirm current git branch is `dev` or the user-approved working branch.
+- [x] Add `pyproject.toml`.
+- [x] Add `uv.lock`.
+- [x] Add `src/bybit_stream_bot/` package skeleton.
+- [x] Add a safe no-op CLI entry point.
+- [x] Add `configs/config.template.toml` based on `.agents/SPEC.md`.
+- [x] Add baseline tests that do not require Bybit credentials.
+- [x] Add or update `.gitignore` entries for local config, SQLite data, caches,
   and virtual environments.
-- [ ] Verify `uv sync`.
-- [ ] Verify package import or CLI startup through `uv run`.
-- [ ] Verify test command through `uv run pytest`.
+- [x] Verify `uv sync`.
+- [x] Verify package import or CLI startup through `uv run`.
+- [x] Verify test command through `uv run pytest`.
 
 ## Phase 1: Single-Process Runtime, REST-Based
 
@@ -107,4 +108,3 @@ Rules:
 - [ ] Add circuit breakers for repeated failures.
 - [ ] Add dry-run verification flow.
 - [ ] Add deployment notes or helpers when runtime shape is stable.
-
