@@ -77,7 +77,7 @@ Preferred mechanisms:
 - mount `configs/config.toml`,
 - inject secrets through environment variables,
 - optionally override config path through an environment variable such as
-  `BYBIT_STREAM_BOT_CONFIG`.
+  `BYBIT_AUTOMATION_CONFIG`.
 
 Do not require editing source code to change runtime config.
 
@@ -119,7 +119,7 @@ wal = true
 [cache.redis]
 enabled = false
 url_env = "REDIS_URL"
-namespace = "bybit-stream-bot"
+namespace = "bybit-automation"
 
 [strategy.defaults]
 enabled = true
@@ -295,4 +295,3 @@ The legacy JSON templates map approximately as follows:
 
 During migration, keep legacy files as references until the new config path is
 working and validated.
-

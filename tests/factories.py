@@ -30,7 +30,7 @@ def valid_raw_config() -> dict:
             "redis": {
                 "enabled": False,
                 "url_env": "REDIS_URL",
-                "namespace": "bybit-stream-bot",
+                "namespace": "bybit-automation",
             }
         },
         "strategy": {
@@ -64,4 +64,3 @@ def valid_raw_config() -> dict:
             },
         ],
     }
-

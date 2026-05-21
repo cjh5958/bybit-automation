@@ -100,3 +100,23 @@
   - `uv run bybit-stream-bot` passed and stayed in dry-run mode.
 - No real API key was needed for this slice; all order execution tests use fake
   executors or fake ccxt-like exchange objects.
+- Started a naming cleanup slice with a clean `dev` worktree.
+- Renamed the Python package and CLI to align with the GitHub repository:
+  - project/distribution name: `bybit-automation`,
+  - Python import package: `bybit_automation`,
+  - CLI command: `bybit-automation`.
+- Updated README project layout so future contributors can quickly find:
+  - application code in `src/bybit_automation/`,
+  - tests in `tests/`,
+  - config templates in `configs/`,
+  - legacy config references in `configs.template/`,
+  - agent handoff materials in `.agents/`.
+- Updated config namespace and documentation references from `bybit-stream-bot`
+  to `bybit-automation`.
+- Ran `uv sync` after renaming project metadata; the installed editable package
+  changed from `bybit-stream-bot` to `bybit-automation`.
+- Verification after the naming cleanup:
+  - `uv run pytest` passed with 26 tests.
+  - `uv run ruff check .` passed.
+  - `uv run bybit-automation` passed.
+  - `uv run python -m bybit_automation` passed.

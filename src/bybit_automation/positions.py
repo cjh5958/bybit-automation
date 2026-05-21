@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from bybit_stream_bot.state import RuntimeState
+from bybit_automation.state import RuntimeState
 
 
 PositionSide = Literal["long", "short"]
@@ -54,4 +54,3 @@ class PositionManager:
                 symbol_state.position_side = None
                 symbol_state.entry_price = None
                 symbol_state.size = 0.0
-

@@ -3,9 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from bybit_stream_bot.config import RiskDefaults
-from bybit_stream_bot.positions import Position
-from bybit_stream_bot.state import SymbolRuntimeState
+from bybit_automation.config import RiskDefaults
+from bybit_automation.positions import Position
+from bybit_automation.state import SymbolRuntimeState
 
 
 RiskAction = Literal["hold", "close"]
@@ -101,4 +101,3 @@ def _trailing_tier(highest_profit: float, risk: RiskDefaults) -> int:
     if highest_profit >= risk.low_trail_enable_threshold:
         return 0
     return -1
-

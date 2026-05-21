@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from bybit_stream_bot.config import parse_config
-from bybit_stream_bot.exchange_client import MarketSnapshot
-from bybit_stream_bot.positions import Position
-from bybit_stream_bot.risk import RiskManager
-from bybit_stream_bot.state import SymbolRuntimeState
-from bybit_stream_bot.strategy import StrategyEngine
+from bybit_automation.config import parse_config
+from bybit_automation.exchange_client import MarketSnapshot
+from bybit_automation.positions import Position
+from bybit_automation.risk import RiskManager
+from bybit_automation.state import SymbolRuntimeState
+from bybit_automation.strategy import StrategyEngine
 from tests.factories import valid_raw_config
 
 
@@ -46,4 +46,3 @@ def test_risk_manager_closes_on_fixed_stop_loss() -> None:
     assert decision.action == "close"
     assert decision.close_side == "sell"
     assert decision.reason == "fixed stop loss reached"
-

@@ -196,7 +196,7 @@ Suggested package layout:
 pyproject.toml
 uv.lock
 src/
-  bybit_stream_bot/
+  bybit_automation/
     __init__.py
     main.py
     app.py
@@ -464,7 +464,7 @@ Tasks:
 
 - Add `pyproject.toml`.
 - Generate `uv.lock`.
-- Move toward `src/bybit_stream_bot/` package layout.
+- Move toward `src/bybit_automation/` package layout.
 - Add CLI entry point.
 - Keep legacy scripts available for reference.
 - Add baseline test/lint tooling.
@@ -473,7 +473,7 @@ Suggested commands:
 
 ```bash
 uv sync
-uv run python -m bybit_stream_bot
+uv run python -m bybit_automation
 uv run pytest
 ```
 
@@ -813,7 +813,7 @@ changes it:
    - `uv run pytest`
    - `uv run ruff check .`
    - CLI smoke test when runtime behavior changed:
-     `uv run bybit-stream-bot`
+     `uv run bybit-automation`
 8. Stage only intentional files.
 9. Commit with a concise conventional-style message, for example:
    - `chore: bootstrap phase 0 project foundation`
@@ -842,7 +842,7 @@ it did not run.
 Start Phase 0:
 
 1. Add `pyproject.toml` for `uv`.
-2. Add package skeleton under `src/bybit_stream_bot/`.
+2. Add package skeleton under `src/bybit_automation/`.
 3. Add a safe no-op CLI entry point.
 4. Add `configs/config.template.toml` based on `SPEC.md`.
 5. Add initial tests for config or pure calculation helpers.

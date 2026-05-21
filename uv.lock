@@ -112,7 +112,7 @@ wheels = [
 ]
 
 [[package]]
-name = "bybit-stream-bot"
+name = "bybit-automation"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

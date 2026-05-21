@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from bybit_stream_bot.calculations import (
+from bybit_automation.calculations import (
     calculate_atr,
     calculate_average_amplitude,
     convert_usdt_to_contract_amount,

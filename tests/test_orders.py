@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from bybit_stream_bot.orders import OrderIntent, OrderManager
+from bybit_automation.orders import OrderIntent, OrderManager
 
 
 class FakeOrderExecutor:
@@ -121,4 +121,3 @@ def test_order_manager_rejects_invalid_limit_order() -> None:
                 price=100,
             )
         )
-

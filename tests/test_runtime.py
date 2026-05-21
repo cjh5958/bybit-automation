@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from bybit_stream_bot.app import BotRuntime
-from bybit_stream_bot.config import parse_config
-from bybit_stream_bot.exchange_client import MarketSnapshot
-from bybit_stream_bot.positions import Position
+from bybit_automation.app import BotRuntime
+from bybit_automation.config import parse_config
+from bybit_automation.exchange_client import MarketSnapshot
+from bybit_automation.positions import Position
 from tests.factories import valid_raw_config
 
 

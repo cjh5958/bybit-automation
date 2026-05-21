@@ -5,10 +5,10 @@ from typing import Any, Protocol
 
 import ccxt
 
-from bybit_stream_bot.calculations import calculate_atr, calculate_average_amplitude
-from bybit_stream_bot.config import BotConfig, ConfigError
-from bybit_stream_bot.orders import OrderSide
-from bybit_stream_bot.positions import Position
+from bybit_automation.calculations import calculate_atr, calculate_average_amplitude
+from bybit_automation.config import BotConfig, ConfigError
+from bybit_automation.orders import OrderSide
+from bybit_automation.positions import Position
 
 DEFAULT_KLINE_TIMEFRAME = "1m"
 DEFAULT_KLINE_LIMIT = 241

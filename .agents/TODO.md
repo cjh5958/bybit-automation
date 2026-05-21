@@ -23,6 +23,7 @@ Rules:
 - [x] Complete Phase 0 project foundation with `uv`.
 - [x] Complete first Phase 1 runtime skeleton slice.
 - [x] Define standard Git workflow for future agents.
+- [x] Rename package and CLI to `bybit_automation` / `bybit-automation`.
 
 ## Phase 0: Project Foundation with `uv`
 
@@ -30,7 +31,7 @@ Rules:
 - [x] Confirm current git branch is `dev` or the user-approved working branch.
 - [x] Add `pyproject.toml`.
 - [x] Add `uv.lock`.
-- [x] Add `src/bybit_stream_bot/` package skeleton.
+- [x] Add `src/bybit_automation/` package skeleton.
 - [x] Add a safe no-op CLI entry point.
 - [x] Add `configs/config.template.toml` based on `.agents/SPEC.md`.
 - [x] Add baseline tests that do not require Bybit credentials.

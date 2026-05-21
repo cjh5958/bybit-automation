@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from bybit_stream_bot.config import ConfigError, parse_config
-from bybit_stream_bot.exchange_client import (
+from bybit_automation.config import ConfigError, parse_config
+from bybit_automation.exchange_client import (
     CcxtBybitExchangeClient,
     DryRunExchangeClient,
     create_exchange_client,

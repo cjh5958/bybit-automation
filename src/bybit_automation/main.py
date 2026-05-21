@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from bybit_stream_bot.app import BotRuntime
-from bybit_stream_bot.config import ConfigError, load_config
+from bybit_automation.app import BotRuntime
+from bybit_automation.config import ConfigError, load_config
 
 
 def main() -> int:
@@ -23,7 +23,7 @@ def main() -> int:
     runtime = BotRuntime(config)
     report = runtime.run_once()
     print(
-        "bybit-stream-bot runtime tick OK "
+        "bybit-automation runtime tick OK "
         f"(mode={config.app.mode}, symbols={len(config.symbols)}, "
         f"positions={report.positions_seen}, safe_mode={report.safe_mode})"
     )

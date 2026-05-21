@@ -3,9 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from bybit_stream_bot.calculations import ema
-from bybit_stream_bot.config import SymbolConfig
-from bybit_stream_bot.exchange_client import MarketSnapshot
+from bybit_automation.calculations import ema
+from bybit_automation.config import SymbolConfig
+from bybit_automation.exchange_client import MarketSnapshot
 
 
 EntrySide = Literal["buy", "sell"]

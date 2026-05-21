@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from bybit_stream_bot.config import BotConfig
-from bybit_stream_bot.exchange_client import ExchangeClient, create_exchange_client
-from bybit_stream_bot.log import configure_logging
-from bybit_stream_bot.notifier import Notifier
-from bybit_stream_bot.orders import OrderIntent, OrderManager, OrderResult
-from bybit_stream_bot.positions import Position, PositionManager
-from bybit_stream_bot.risk import RiskDecision, RiskManager
-from bybit_stream_bot.state import RuntimeState
-from bybit_stream_bot.strategy import StrategyDecision, StrategyEngine
+from bybit_automation.config import BotConfig
+from bybit_automation.exchange_client import ExchangeClient, create_exchange_client
+from bybit_automation.log import configure_logging
+from bybit_automation.notifier import Notifier
+from bybit_automation.orders import OrderIntent, OrderManager, OrderResult
+from bybit_automation.positions import Position, PositionManager
+from bybit_automation.risk import RiskDecision, RiskManager
+from bybit_automation.state import RuntimeState
+from bybit_automation.strategy import StrategyDecision, StrategyEngine
 
 
 @dataclass(frozen=True)
