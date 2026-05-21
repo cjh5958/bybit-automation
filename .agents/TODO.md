@@ -52,11 +52,11 @@ Rules:
 - [x] Add `PositionManager` and per-symbol runtime state.
 - [x] Ensure strategy and risk logic share one runtime state.
 - [x] Verify all exchange side effects flow through `OrderManager`.
-- [ ] Add concrete REST/ccxt exchange client behind explicit mode guards.
+- [x] Add concrete REST/ccxt exchange client behind explicit mode guards.
 - [ ] Wire demo/live order execution through `OrderManager`.
 - [x] Migrate legacy order sizing and tick-size rounding into testable helpers.
 - [ ] Add single-process loop scheduling for different strategy/risk cadences.
-- [ ] Add tests for REST exchange client using fakes/mocks, not live Bybit.
+- [x] Add tests for REST exchange client using fakes/mocks, not live Bybit.
 
 ## Phase 2: SQLite Persistence
 

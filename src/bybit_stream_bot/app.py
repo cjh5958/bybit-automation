@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from bybit_stream_bot.config import BotConfig
-from bybit_stream_bot.exchange_client import DryRunExchangeClient, ExchangeClient
+from bybit_stream_bot.exchange_client import ExchangeClient, create_exchange_client
 from bybit_stream_bot.log import configure_logging
 from bybit_stream_bot.notifier import Notifier
 from bybit_stream_bot.orders import OrderIntent, OrderManager, OrderResult
@@ -33,7 +33,7 @@ class BotRuntime:
     ) -> None:
         self.config = config
         self.state = state or RuntimeState()
-        self.exchange = exchange or DryRunExchangeClient()
+        self.exchange = exchange or create_exchange_client(config)
         self.notifier = notifier or Notifier()
         self.strategy = StrategyEngine()
         self.risk = RiskManager()
@@ -103,4 +103,3 @@ class BotRuntime:
             market = self.exchange.fetch_market_snapshot(symbol_config.symbol)
             decisions.extend(self.strategy.evaluate(symbol_config, market))
         return decisions
-

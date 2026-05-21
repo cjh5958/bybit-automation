@@ -66,3 +66,17 @@
   - `uv run pytest` passed with 15 tests.
   - `uv run ruff check .` passed.
   - `uv run bybit-stream-bot` passed and ran one dry-run runtime tick.
+- Started the REST/ccxt exchange-client slice with a clean `dev` worktree.
+- Added `CcxtBybitExchangeClient` behind explicit mode guards:
+  - `create_exchange_client()` returns `DryRunExchangeClient` in `dry_run`.
+  - direct ccxt client creation rejects `dry_run`.
+  - demo/live creation requires resolved exchange credentials.
+- Added REST-style read methods for:
+  - positions,
+  - ticker/ohlcv-derived market snapshots,
+  - ATR percent and average amplitude percent.
+- Kept all tests offline by injecting a fake ccxt-like exchange object.
+- Verification after the exchange-client slice:
+  - `uv run pytest` passed with 19 tests.
+  - `uv run ruff check .` passed.
+  - `uv run bybit-stream-bot` passed and stayed in dry-run mode.
