@@ -54,7 +54,7 @@ Rules:
 - [x] Verify all exchange side effects flow through `OrderManager`.
 - [ ] Add concrete REST/ccxt exchange client behind explicit mode guards.
 - [ ] Wire demo/live order execution through `OrderManager`.
-- [ ] Migrate legacy order sizing and tick-size rounding into testable helpers.
+- [x] Migrate legacy order sizing and tick-size rounding into testable helpers.
 - [ ] Add single-process loop scheduling for different strategy/risk cadences.
 - [ ] Add tests for REST exchange client using fakes/mocks, not live Bybit.
 

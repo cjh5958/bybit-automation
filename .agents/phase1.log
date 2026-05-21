@@ -43,3 +43,26 @@
 - Version-control rule now requires agents to verify, update TODO/log files,
   commit coherent work, push to `origin/dev`, and end with a clean worktree
   unless the user asks otherwise.
+- Started the next Phase 1 slice with a clean `dev` worktree.
+- Scope for this slice:
+  - migrate legacy calculation helpers into testable code,
+  - keep all behavior offline and deterministic,
+  - avoid adding concrete Bybit REST calls or live order execution.
+- Added `bybit_stream_bot.calculations` for:
+  - tick-size price formatting,
+  - USDT-to-contract amount conversion,
+  - EMA,
+  - ATR,
+  - average amplitude.
+- Wired `StrategyEngine` to use the shared EMA helper instead of a private
+  implementation.
+- Issue found during verification: the first calculation test expectations were
+  hand-calculated incorrectly for contract amount and ATR.
+- Resolution: corrected expectations to match the legacy formulas:
+  - contract conversion uses the larger close-fee branch and floors to min amount
+    steps,
+  - ATR averages true ranges `4, 3, 3` as `10 / 3`.
+- Verification after the calculation helper slice:
+  - `uv run pytest` passed with 15 tests.
+  - `uv run ruff check .` passed.
+  - `uv run bybit-stream-bot` passed and ran one dry-run runtime tick.

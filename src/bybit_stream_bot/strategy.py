@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
+from bybit_stream_bot.calculations import ema
 from bybit_stream_bot.config import SymbolConfig
 from bybit_stream_bot.exchange_client import MarketSnapshot
 
@@ -63,7 +64,7 @@ class StrategyEngine:
             ]
 
         close_price = market.close_prices[-1]
-        ema_value = _ema(market.close_prices, symbol_config.ema_period)
+        ema_value = ema(market.close_prices, symbol_config.ema_period)
         selected_value = (
             (market.average_amplitude_pct + market.atr_pct) / 2 * symbol_config.value_multiplier
         )
@@ -100,14 +101,3 @@ class StrategyEngine:
                 reason="flat trend",
             )
         ]
-
-
-def _ema(values: tuple[float, ...], period: int) -> float:
-    if period == 0:
-        return values[-1]
-    multiplier = 2 / (period + 1)
-    ema_value = values[0]
-    for value in values[1:]:
-        ema_value = (value - ema_value) * multiplier + ema_value
-    return ema_value
-
