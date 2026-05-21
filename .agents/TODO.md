@@ -21,6 +21,8 @@ Rules:
 - [x] Move agent-facing documentation under `.agents/`.
 - [x] Create shared agent TODO list.
 - [x] Complete Phase 0 project foundation with `uv`.
+- [x] Complete first Phase 1 runtime skeleton slice.
+- [x] Define standard Git workflow for future agents.
 
 ## Phase 0: Project Foundation with `uv`
 
@@ -40,16 +42,21 @@ Rules:
 
 ## Phase 1: Single-Process Runtime, REST-Based
 
-- [ ] Create `App` or `BotRuntime` lifecycle.
-- [ ] Add unified config loading.
-- [ ] Add unified logging setup.
-- [ ] Extract an `ExchangeClient` abstraction.
-- [ ] Extract pure `StrategyEngine` decision logic.
-- [ ] Extract pure `RiskManager` decision logic.
-- [ ] Add centralized `OrderManager`.
-- [ ] Add `PositionManager` and per-symbol runtime state.
-- [ ] Ensure strategy and risk logic share one runtime state.
-- [ ] Verify all exchange side effects flow through `OrderManager`.
+- [x] Create `App` or `BotRuntime` lifecycle.
+- [x] Add unified config loading.
+- [x] Add unified logging setup.
+- [x] Extract an `ExchangeClient` abstraction.
+- [x] Extract pure `StrategyEngine` decision logic.
+- [x] Extract pure `RiskManager` decision logic.
+- [x] Add centralized `OrderManager`.
+- [x] Add `PositionManager` and per-symbol runtime state.
+- [x] Ensure strategy and risk logic share one runtime state.
+- [x] Verify all exchange side effects flow through `OrderManager`.
+- [ ] Add concrete REST/ccxt exchange client behind explicit mode guards.
+- [ ] Wire demo/live order execution through `OrderManager`.
+- [ ] Migrate legacy order sizing and tick-size rounding into testable helpers.
+- [ ] Add single-process loop scheduling for different strategy/risk cadences.
+- [ ] Add tests for REST exchange client using fakes/mocks, not live Bybit.
 
 ## Phase 2: SQLite Persistence
 

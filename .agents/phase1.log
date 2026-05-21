@@ -1,0 +1,45 @@
+# Phase 1 Log
+
+## 2026-05-21
+
+- Started Phase 1 on branch `dev`.
+- Working tree was clean at the start of the phase.
+- Scope for the first Phase 1 slice:
+  - create a single-process runtime skeleton,
+  - add core abstractions for strategy, risk, orders, positions, and exchange access,
+  - keep the runtime in `dry_run` behavior,
+  - do not connect to Bybit,
+  - do not place, cancel, or close live orders.
+- Decision: store this log under `.agents/phase1.log` to keep all agent-facing
+  project documents in the existing `.agents/` directory.
+- Implemented the first runtime slice:
+  - `BotRuntime`,
+  - `RuntimeState`,
+  - `PositionManager`,
+  - `StrategyEngine`,
+  - `RiskManager`,
+  - `OrderManager`,
+  - `DryRunExchangeClient`,
+  - basic notifier and logging setup.
+- Safety note: Phase 1 runtime still defaults to `dry_run`; no real exchange
+  client has been added and live order execution raises `NotImplementedError`.
+- Issue found during verification: tests initially failed to import
+  `tests.factories` because `tests/` was not a package.
+- Resolution: added `tests/__init__.py` so shared test factories can be imported
+  consistently.
+- Verification after the fix:
+  - `uv run pytest` passed with 8 tests.
+  - `uv run ruff check .` passed.
+  - `uv run bybit-stream-bot` passed and ran one dry-run runtime tick.
+  - `uv run python -m bybit_stream_bot` passed and ran one dry-run runtime tick.
+- Remaining Phase 1 work recorded in `.agents/TODO.md`:
+  - concrete REST/ccxt exchange client,
+  - guarded demo/live order execution,
+  - legacy order sizing and tick-size helpers,
+  - loop scheduling for different strategy/risk cadences,
+  - exchange client tests with fakes/mocks.
+- Added a standard version-control workflow to `.agents/AGENTS.md` after the
+  user requested automatic Git management on the `dev` branch.
+- Version-control rule now requires agents to verify, update TODO/log files,
+  commit coherent work, push to `origin/dev`, and end with a clean worktree
+  unless the user asks otherwise.

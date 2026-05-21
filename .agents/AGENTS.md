@@ -786,6 +786,47 @@ direction.
 - If new architecture decisions are made, record the reason, not only the final
   choice.
 
+### Version Control Workflow
+
+The `dev` branch is the standard working branch for agents. The user will decide
+when to merge `dev` into `main`.
+
+Future agents must use this standard Git workflow unless the user explicitly
+changes it:
+
+1. Start by checking the current branch and worktree:
+   - `git branch --show-current`
+   - `git status --short`
+2. Work only on `dev` unless the user approves another branch.
+3. Before editing, identify whether there are existing uncommitted changes.
+   Preserve user changes and do not revert unrelated files.
+4. Make a small, coherent change set tied to the current phase or task.
+5. Update `.agents/TODO.md` in the same change set whenever task status changes.
+6. Update the active phase log, such as `.agents/phase1.log`, with:
+   - work completed,
+   - verification performed,
+   - issues encountered,
+   - how issues were resolved,
+   - known remaining work or blockers.
+7. Run relevant verification before committing. For this Python project, the
+   default verification is:
+   - `uv run pytest`
+   - `uv run ruff check .`
+   - CLI smoke test when runtime behavior changed:
+     `uv run bybit-stream-bot`
+8. Stage only intentional files.
+9. Commit with a concise conventional-style message, for example:
+   - `chore: bootstrap phase 0 project foundation`
+   - `feat: add dry-run runtime skeleton`
+   - `docs: define agent git workflow`
+10. Push successful commits to `origin/dev`.
+11. End with a clean worktree unless the user explicitly asks to leave changes
+    uncommitted.
+
+If verification cannot run because of environment problems, record the issue in
+the active phase log and final response. Do not claim a verification passed when
+it did not run.
+
 ### Shared TODO Rules
 
 - `.agents/TODO.md` is the canonical cross-agent task list.

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from bybit_stream_bot.app import BotRuntime
 from bybit_stream_bot.config import ConfigError, load_config
 
 
@@ -19,9 +20,11 @@ def main() -> int:
         print(f"Config validation failed: {exc}")
         return 1
 
+    runtime = BotRuntime(config)
+    report = runtime.run_once()
     print(
-        "bybit-stream-bot phase0 startup OK "
-        f"(mode={config.app.mode}, symbols={len(config.symbols)})"
+        "bybit-stream-bot runtime tick OK "
+        f"(mode={config.app.mode}, symbols={len(config.symbols)}, "
+        f"positions={report.positions_seen}, safe_mode={report.safe_mode})"
     )
     return 0
-
