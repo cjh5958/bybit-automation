@@ -14,6 +14,8 @@ from tests.factories import valid_raw_config
 class FakeCcxtExchange:
     def __init__(self) -> None:
         self.fetch_ohlcv_calls: list[tuple[str, str, int]] = []
+        self.created_orders: list[dict] = []
+        self.canceled_orders: list[tuple[str, str]] = []
 
     def fetch_positions(self) -> list[dict]:
         return [
@@ -42,6 +44,36 @@ class FakeCcxtExchange:
     def fetch_ohlcv(self, symbol: str, timeframe: str, limit: int) -> list[list[float]]:
         self.fetch_ohlcv_calls.append((symbol, timeframe, limit))
         return [[index, 100, 102, 99, 101] for index in range(61)]
+
+    def create_order(
+        self,
+        *,
+        symbol: str,
+        type: str,
+        side: str,
+        amount: float,
+        price: float | None,
+        params: dict | None = None,
+    ) -> dict:
+        order = {
+            "id": f"{type}-1",
+            "symbol": symbol,
+            "type": type,
+            "side": side,
+            "amount": amount,
+            "price": price,
+            "params": params or {},
+        }
+        self.created_orders.append(order)
+        return order
+
+    def fetch_open_orders(self, symbol: str, params: dict) -> list[dict]:
+        assert symbol == "MOODENG/USDT:USDT"
+        assert params == {"orderFilter": "Order"}
+        return [{"id": "order-1"}, {"id": "order-2"}]
+
+    def cancel_order(self, order_id: str, symbol: str) -> None:
+        self.canceled_orders.append((order_id, symbol))
 
 
 def test_create_exchange_client_returns_dry_run_client() -> None:
@@ -89,3 +121,28 @@ def test_ccxt_client_builds_market_snapshot() -> None:
     assert snapshot.average_amplitude_pct == pytest.approx(2.9702970297)
     assert exchange.fetch_ohlcv_calls == [("MOODENG/USDT:USDT", "1m", 61)]
 
+
+def test_ccxt_client_submits_orders_and_cancels_open_orders() -> None:
+    exchange = FakeCcxtExchange()
+    client = CcxtBybitExchangeClient(exchange=exchange)
+
+    limit_order = client.create_limit_order(
+        symbol="MOODENG/USDT:USDT",
+        side="buy",
+        amount=1,
+        price=100,
+    )
+    market_order = client.create_market_order(
+        symbol="MOODENG/USDT:USDT",
+        side="sell",
+        amount=1,
+    )
+    canceled_order_ids = client.cancel_all_orders("MOODENG/USDT:USDT")
+
+    assert limit_order["id"] == "limit-1"
+    assert market_order["params"] == {"type": "future"}
+    assert canceled_order_ids == ["order-1", "order-2"]
+    assert exchange.canceled_orders == [
+        ("order-1", "MOODENG/USDT:USDT"),
+        ("order-2", "MOODENG/USDT:USDT"),
+    ]

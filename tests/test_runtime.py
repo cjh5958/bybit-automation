@@ -63,6 +63,7 @@ def test_runtime_closing_risk_order_is_dry_run_only() -> None:
     assert report.risk_decisions[0].action == "close"
     assert report.order_results[0].dry_run is True
     assert report.order_results[0].submitted is False
+    assert report.order_results[0].intent.amount == 1
 
 
 def test_runtime_skips_strategy_for_active_position_symbol() -> None:
@@ -95,4 +96,3 @@ def test_runtime_skips_strategy_for_active_position_symbol() -> None:
 
     assert report.strategy_decisions == ()
     assert exchange.requested_snapshots == []
-

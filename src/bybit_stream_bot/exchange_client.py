@@ -7,6 +7,7 @@ import ccxt
 
 from bybit_stream_bot.calculations import calculate_atr, calculate_average_amplitude
 from bybit_stream_bot.config import BotConfig, ConfigError
+from bybit_stream_bot.orders import OrderSide
 from bybit_stream_bot.positions import Position
 
 DEFAULT_KLINE_TIMEFRAME = "1m"
@@ -112,6 +113,47 @@ class CcxtBybitExchangeClient:
                 period=self._volatility_period,
             ),
         )
+
+    def create_limit_order(
+        self,
+        *,
+        symbol: str,
+        side: OrderSide,
+        amount: float,
+        price: float,
+    ) -> dict[str, Any]:
+        return self._exchange.create_order(
+            symbol=symbol,
+            type="limit",
+            side=side,
+            amount=amount,
+            price=price,
+        )
+
+    def create_market_order(
+        self,
+        *,
+        symbol: str,
+        side: OrderSide,
+        amount: float,
+    ) -> dict[str, Any]:
+        return self._exchange.create_order(
+            symbol=symbol,
+            type="market",
+            side=side,
+            amount=amount,
+            price=None,
+            params={"type": "future"},
+        )
+
+    def cancel_all_orders(self, symbol: str) -> list[str]:
+        orders = self._exchange.fetch_open_orders(symbol, params={"orderFilter": "Order"})
+        canceled_order_ids: list[str] = []
+        for order in orders:
+            order_id = str(order["id"])
+            self._exchange.cancel_order(order_id, symbol)
+            canceled_order_ids.append(order_id)
+        return canceled_order_ids
 
 
 def create_exchange_client(config: BotConfig) -> ExchangeClient:

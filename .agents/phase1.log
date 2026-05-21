@@ -80,3 +80,23 @@
   - `uv run pytest` passed with 19 tests.
   - `uv run ruff check .` passed.
   - `uv run bybit-stream-bot` passed and stayed in dry-run mode.
+- Started the guarded order-execution slice with a clean `dev` worktree.
+- Added an `OrderExecutor` protocol and wired `OrderManager` to execute:
+  - `place_limit`,
+  - `close_market`,
+  - `cancel_all`.
+- Safety behavior:
+  - `dry_run` still records intents without calling the executor,
+  - non-dry-run execution requires an injected executor,
+  - invalid side/amount/price values fail before reaching the executor.
+- Added ccxt-backed implementations for:
+  - limit order creation,
+  - market close order creation,
+  - cancel-all open order flow.
+- Runtime close-market intents now include the current position size.
+- Verification after the guarded order-execution slice:
+  - `uv run pytest` passed with 26 tests.
+  - `uv run ruff check .` passed.
+  - `uv run bybit-stream-bot` passed and stayed in dry-run mode.
+- No real API key was needed for this slice; all order execution tests use fake
+  executors or fake ccxt-like exchange objects.

@@ -38,7 +38,10 @@ class BotRuntime:
         self.strategy = StrategyEngine()
         self.risk = RiskManager()
         self.positions = PositionManager(self.state)
-        self.orders = OrderManager(dry_run=config.app.mode == "dry_run")
+        self.orders = OrderManager(
+            dry_run=config.app.mode == "dry_run",
+            executor=self.exchange,
+        )
 
     def run_once(self) -> RuntimeReport:
         configure_logging(self.config.app.log_level)
@@ -88,6 +91,7 @@ class BotRuntime:
                         action="close_market",
                         symbol=decision.symbol,
                         side=decision.close_side,
+                        amount=symbol_state.size,
                         reason=decision.reason,
                     )
                 )
