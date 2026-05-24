@@ -57,6 +57,7 @@ Rules:
 - [x] Add concrete REST/ccxt exchange client behind explicit mode guards.
 - [x] Wire demo/live order execution through `OrderManager`.
 - [x] Migrate legacy order sizing and tick-size rounding into testable helpers.
+- [x] Review Phase 1 before Phase 2 and wire strategy entry intents through `OrderManager`.
 - [x] Add single-process loop scheduling for different strategy/risk cadences.
 - [x] Add tests for REST exchange client using fakes/mocks, not live Bybit.
 

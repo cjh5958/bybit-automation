@@ -45,6 +45,13 @@ class FakeCcxtExchange:
         self.fetch_ohlcv_calls.append((symbol, timeframe, limit))
         return [[index, 100, 102, 99, 101] for index in range(61)]
 
+    def market(self, symbol: str) -> dict:
+        assert symbol == "MOODENG/USDT:USDT"
+        return {
+            "precision": {"price": 0.01},
+            "limits": {"amount": {"min": 0.001}},
+        }
+
     def create_order(
         self,
         *,
@@ -120,6 +127,15 @@ def test_ccxt_client_builds_market_snapshot() -> None:
     assert snapshot.atr_pct == pytest.approx(3)
     assert snapshot.average_amplitude_pct == pytest.approx(2.9702970297)
     assert exchange.fetch_ohlcv_calls == [("MOODENG/USDT:USDT", "1m", 61)]
+
+
+def test_ccxt_client_reads_trading_rules() -> None:
+    client = CcxtBybitExchangeClient(exchange=FakeCcxtExchange())
+
+    rules = client.fetch_trading_rules("MOODENG/USDT:USDT")
+
+    assert rules.tick_size == 0.01
+    assert rules.min_amount == 0.001
 
 
 def test_ccxt_client_submits_orders_and_cancels_open_orders() -> None:

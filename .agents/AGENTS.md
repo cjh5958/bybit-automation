@@ -839,11 +839,12 @@ it did not run.
 
 ## Immediate Next Recommended Step
 
-Start Phase 0:
+Start Phase 2:
 
-1. Add `pyproject.toml` for `uv`.
-2. Add package skeleton under `src/bybit_automation/`.
-3. Add a safe no-op CLI entry point.
-4. Add `configs/config.template.toml` based on `SPEC.md`.
-5. Add initial tests for config or pure calculation helpers.
-6. Keep `strategy_bybit.py` and `trail_bybit.py` unchanged as legacy references.
+1. Add a thin SQLite connection/bootstrap module.
+2. Enable WAL mode based on `[database.sqlite].wal`.
+3. Add schema bootstrap for orders, order events, position snapshots, strategy
+   decisions, risk events, bot state, config versions, and trailing state.
+4. Add repository tests using temporary SQLite databases.
+5. Keep runtime behavior in `dry_run` unless the user explicitly approves demo
+   or live exchange checks.

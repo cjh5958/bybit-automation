@@ -2,9 +2,10 @@
 
 Refactor-in-progress Bybit futures trading automation service.
 
-The current work is in Phase 1: a single-process dry-run runtime skeleton with
-guarded exchange and order abstractions. New runtime code must default to
-`dry_run` and must not place live orders by default.
+Phase 1 is complete: the project now has a single-process REST-based runtime
+foundation with guarded exchange and order abstractions. Current work is ready
+to begin Phase 2 SQLite persistence. New runtime code must default to `dry_run`
+and must not place live orders by default.
 
 Project layout:
 

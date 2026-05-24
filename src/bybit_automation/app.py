@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from bybit_automation.calculations import convert_usdt_to_contract_amount, round_price_to_tick
 from bybit_automation.config import BotConfig
 from bybit_automation.exchange_client import ExchangeClient, create_exchange_client
 from bybit_automation.log import configure_logging
@@ -65,6 +66,7 @@ class BotRuntime:
         strategy_decisions: list[StrategyDecision] = []
         if include_strategy and not self.state.safe_mode:
             strategy_decisions = self._evaluate_strategy(current_positions)
+            order_results.extend(self._execute_strategy_orders(strategy_decisions))
 
         return RuntimeReport(
             positions_seen=len(current_positions),
@@ -119,3 +121,46 @@ class BotRuntime:
             market = self.exchange.fetch_market_snapshot(symbol_config.symbol)
             decisions.extend(self.strategy.evaluate(symbol_config, market))
         return decisions
+
+    def _execute_strategy_orders(self, decisions: list[StrategyDecision]) -> list[OrderResult]:
+        results: list[OrderResult] = []
+        for decision in decisions:
+            if not decision.should_place_order:
+                continue
+
+            rules = self.exchange.fetch_trading_rules(decision.symbol)
+            price = float(round_price_to_tick(decision.target_price, rules.tick_size))
+            amount = convert_usdt_to_contract_amount(
+                price=price,
+                amount_usdt=decision.amount_usdt,
+                min_amount=rules.min_amount,
+                leverage=self.config.exchange.default_leverage,
+            )
+            if amount <= 0:
+                continue
+
+            symbol_state = self.state.get_symbol(decision.symbol)
+            symbol_state.status = "ENTRY_ORDER_PLACED"
+            results.append(
+                self.orders.execute(
+                    OrderIntent(
+                        action="cancel_all",
+                        symbol=decision.symbol,
+                        reason="refresh entry order",
+                    )
+                )
+            )
+            results.append(
+                self.orders.execute(
+                    OrderIntent(
+                        action="place_limit",
+                        symbol=decision.symbol,
+                        side=decision.side,
+                        amount_usdt=decision.amount_usdt,
+                        price=price,
+                        reason=decision.reason,
+                        amount=amount,
+                    )
+                )
+            )
+        return results

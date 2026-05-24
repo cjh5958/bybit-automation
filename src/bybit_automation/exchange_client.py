@@ -24,6 +24,13 @@ class MarketSnapshot:
     average_amplitude_pct: float
 
 
+@dataclass(frozen=True)
+class TradingRules:
+    symbol: str
+    tick_size: float
+    min_amount: float
+
+
 class ExchangeClient(Protocol):
     def fetch_positions(self) -> list[Position]:
         raise NotImplementedError
@@ -31,9 +38,12 @@ class ExchangeClient(Protocol):
     def fetch_market_snapshot(self, symbol: str) -> MarketSnapshot | None:
         raise NotImplementedError
 
+    def fetch_trading_rules(self, symbol: str) -> TradingRules:
+        raise NotImplementedError
+
 
 class DryRunExchangeClient:
-    """Exchange placeholder for Phase 1.
+    """Exchange client for safe local runtime checks.
 
     It intentionally performs no network calls and no trading side effects.
     """
@@ -43,6 +53,9 @@ class DryRunExchangeClient:
 
     def fetch_market_snapshot(self, symbol: str) -> MarketSnapshot | None:
         return None
+
+    def fetch_trading_rules(self, symbol: str) -> TradingRules:
+        return TradingRules(symbol=symbol, tick_size=0.0001, min_amount=0.001)
 
 
 class CcxtBybitExchangeClient:
@@ -113,6 +126,16 @@ class CcxtBybitExchangeClient:
                 period=self._volatility_period,
             ),
         )
+
+    def fetch_trading_rules(self, symbol: str) -> TradingRules:
+        market = self._exchange.market(symbol)
+        precision = market.get("precision") or {}
+        limits = market.get("limits") or {}
+        amount_limits = limits.get("amount") or {}
+
+        tick_size = _positive_market_float(precision.get("price"), "price precision")
+        min_amount = _positive_market_float(amount_limits.get("min"), "minimum amount")
+        return TradingRules(symbol=symbol, tick_size=tick_size, min_amount=min_amount)
 
     def create_limit_order(
         self,
@@ -206,3 +229,12 @@ def _ticker_mark_price(ticker: dict[str, Any]) -> float:
             if price > 0:
                 return price
     raise ValueError("ticker does not contain a positive usable price")
+
+
+def _positive_market_float(value: Any, name: str) -> float:
+    if value in (None, ""):
+        raise ValueError(f"market {name} is required")
+    number = float(value)
+    if number <= 0:
+        raise ValueError(f"market {name} must be positive")
+    return number

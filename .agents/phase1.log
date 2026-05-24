@@ -139,3 +139,17 @@
   - request fresh Bybit demo API credentials only when running that smoke test,
   - delay real order-placement checks until after SQLite/reconciliation/safe-mode
     work is in place.
+- Reviewed Phase 1 before starting Phase 2.
+- Finding: strategy decisions were reported but entry order intents were not yet
+  executed through `OrderManager`, while risk close intents already were.
+- Resolution:
+  - added trading-rule lookup for tick size and minimum contract amount,
+  - converted strategy USDT amounts into contract amounts,
+  - rounded strategy target prices to exchange tick size,
+  - wired strategy refresh flow through `OrderManager` as `cancel_all` followed
+    by `place_limit`,
+  - kept `dry_run` behavior from submitting exchange side effects.
+- Also updated README and runtime docstrings so project status reflects Phase 1
+  completion and Phase 2 readiness.
+- Updated `.agents/AGENTS.md` immediate next step from stale Phase 0 bootstrap
+  instructions to Phase 2 SQLite preparation.

@@ -7,10 +7,10 @@ from bybit_automation.config import ConfigError, load_config
 
 
 def main() -> int:
-    """Safe Phase 0 CLI entry point.
+    """Safe runtime smoke-test CLI entry point.
 
-    This command validates config shape only. It does not connect to Bybit and
-    does not place, cancel, or close orders.
+    The template config defaults to dry_run, so this command does not connect to
+    Bybit and does not place, cancel, or close orders by default.
     """
 
     config_path = Path("configs/config.template.toml")
