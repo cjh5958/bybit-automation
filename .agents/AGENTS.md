@@ -754,6 +754,20 @@ direction.
 ### Dependency and Tooling Rules
 
 - Use `uv` for Python dependency and environment management.
+- On this Windows workspace, prefer project-local `uv` runtime/cache locations
+  before running `uv run` commands:
+  - PowerShell:
+    `$env:UV_CACHE_DIR='.uv-cache'; $env:UV_PYTHON_INSTALL_DIR='.uv-python'`
+  - Then run commands such as:
+    `uv sync`, `uv run pytest`, `uv run ruff check .`, and
+    `uv run bybit-automation`.
+- Rationale: previous sessions saw `uv run` fail when using global paths such as
+  `C:\Users\User\AppData\Local\uv\cache` or
+  `C:\Users\User\AppData\Roaming\uv\python` because of local filesystem or
+  permission issues. Keeping cache and managed Python installs inside the
+  workspace avoids that startup friction.
+- If `.venv` points to a missing Python interpreter, let `uv` recreate it after
+  setting `UV_CACHE_DIR` and `UV_PYTHON_INSTALL_DIR`.
 - At the start of coding work in a new session or on a new machine, inspect the
   development environment before making assumptions. Check at least:
   - current shell and OS,
@@ -836,6 +850,47 @@ it did not run.
 - If a future agent changes phase scope, adds a blocker, or completes a task, it
   must update `TODO.md` in the same change set.
 - Do not use tool-specific task formats as the only source of truth.
+
+## Phase 2 Implementation Slices
+
+Recommended order for SQLite persistence work:
+
+1. Storage foundation:
+   - add `src/bybit_automation/storage/`,
+   - create a thin SQLite connection/bootstrap module,
+   - create parent directories for the configured database path,
+   - enable WAL mode when `[database.sqlite].wal = true`,
+   - keep using the standard library `sqlite3` first.
+2. Schema bootstrap:
+   - add idempotent schema creation,
+   - include tables for orders, order events, position snapshots, strategy
+     decisions, risk events, bot state, config versions, and per-symbol trailing
+     state,
+   - store timestamps as ISO-8601 UTC text or another documented consistent
+     format.
+3. Repository layer:
+   - add small repositories instead of exposing raw SQL throughout the runtime,
+   - start with append/read helpers for order events, strategy decisions, risk
+     events, position snapshots, and trailing state,
+   - use explicit transactions for multi-row updates.
+4. Runtime integration:
+   - persist strategy decisions and risk decisions after each runtime tick,
+   - persist order results after `OrderManager` returns,
+   - persist position snapshots after `PositionManager` syncs,
+   - save and restore trailing state such as highest profit and current tier.
+5. Config version recording:
+   - compute a stable hash of successfully loaded config content,
+   - store source path, normalized content, loaded time, and reload reason,
+   - do not implement hot reload yet; only record successful startup/load.
+6. Tests and verification:
+   - use temporary SQLite database files in tests,
+   - verify WAL mode,
+   - verify schema bootstrap is idempotent,
+   - verify repository writes survive closing and reopening the connection,
+   - keep all tests offline and free of Bybit credentials.
+
+Avoid adding reconciliation or `SAFE_MODE` behavior in Phase 2 unless it is
+strictly needed to prove persistence; those belong to Phase 3.
 
 ## Immediate Next Recommended Step
 
