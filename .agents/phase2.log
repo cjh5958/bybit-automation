@@ -1,0 +1,28 @@
+# Phase 2 Log
+
+## 2026-05-26
+
+- Started Phase 2 on branch `dev` with a clean worktree.
+- User-approved scope:
+  - complete Phase 2 SQLite persistence,
+  - keep using current Phase 1 trading logic,
+  - use task slices and commits,
+  - write this Phase 2 log like the Phase 1 handoff log,
+  - avoid experimental escalation if a problem appears hard or unsafe.
+- User granted permission to push Phase 2 task-slice commits to `origin/dev`.
+- Planned implementation order:
+  - SQLite connection/bootstrap and WAL,
+  - schema creation,
+  - repositories with temporary SQLite tests,
+  - runtime persistence integration,
+  - config version recording,
+  - TODO/log updates and full verification.
+- Implemented first storage slice:
+  - added `src/bybit_automation/storage/`,
+  - added SQLite connection/bootstrap helpers,
+  - added idempotent schema creation with `schema_meta`,
+  - added tables for orders, order events, position snapshots, strategy
+    decisions, risk events, bot state, config versions, and trailing state,
+  - added repository classes for append/read operations,
+  - added temporary database tests for WAL, idempotent bootstrap, persistence
+    across reopen, config version recording, and config-driven database opening.
