@@ -49,3 +49,17 @@
     passed with 11 tests.
   - `uv run ruff check src/bybit_automation/app.py src/bybit_automation/storage tests/test_runtime_persistence.py tests/test_storage.py`
     passed.
+- Committed and pushed runtime persistence slice:
+  - `74b90bc feat: persist runtime decisions and state`
+- Implemented config version and CLI integration slice:
+  - CLI startup now opens the configured SQLite database,
+  - CLI records the loaded config file in `config_versions`,
+  - CLI passes repositories into `BotRuntime`,
+  - CLI closes the SQLite connection after the smoke tick.
+- Added an integration test proving `run_with_config()` bootstraps SQLite,
+  records config version, persists strategy decisions, and writes bot state.
+- Verification for config/CLI slice:
+  - `uv run pytest tests/test_main.py tests/test_storage.py tests/test_runtime_persistence.py`
+    passed with 8 tests.
+  - `uv run ruff check src/bybit_automation/main.py tests/test_main.py`
+    passed.
