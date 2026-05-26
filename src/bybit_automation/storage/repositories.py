@@ -174,6 +174,19 @@ class TrailingStateRepository:
         self._conn = conn
 
     def save(self, state: SymbolRuntimeState) -> None:
+        self.save_state_values(
+            symbol=state.symbol,
+            highest_profit_pct=state.highest_profit_pct,
+            trailing_tier=state.trailing_tier,
+        )
+
+    def save_state_values(
+        self,
+        *,
+        symbol: str,
+        highest_profit_pct: float,
+        trailing_tier: int,
+    ) -> None:
         timestamp = utc_now()
         with self._conn:
             self._conn.execute(
@@ -187,7 +200,7 @@ class TrailingStateRepository:
                     trailing_tier = excluded.trailing_tier,
                     updated_at = excluded.updated_at
                 """,
-                (state.symbol, state.highest_profit_pct, state.trailing_tier, timestamp),
+                (symbol, highest_profit_pct, trailing_tier, timestamp),
             )
 
     def load(self, symbol: str) -> TrailingStateRecord | None:

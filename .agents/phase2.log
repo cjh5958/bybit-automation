@@ -26,3 +26,26 @@
   - added repository classes for append/read operations,
   - added temporary database tests for WAL, idempotent bootstrap, persistence
     across reopen, config version recording, and config-driven database opening.
+- Verification for first storage slice:
+  - `uv run pytest tests/test_storage.py` passed with 5 tests.
+  - `uv run ruff check src/bybit_automation/storage tests/test_storage.py`
+    passed.
+- Committed and pushed first slice:
+  - `ea348e1 feat: add sqlite storage foundation`
+- Implemented runtime persistence slice:
+  - `BotRuntime` now accepts optional `PersistenceRepositories`,
+  - runtime restores saved trailing state during initialization,
+  - position snapshots are persisted after position sync,
+  - risk decisions and trailing state are persisted during risk evaluation,
+  - strategy decisions are persisted during strategy evaluation,
+  - order results are persisted after `OrderManager` returns,
+  - last tick metadata is stored in `bot_state`.
+- Added runtime persistence tests for:
+  - strategy/order/bot-state persistence,
+  - restoring and re-saving trailing state,
+  - existing runtime tests still running without repositories.
+- Verification for runtime persistence slice:
+  - `uv run pytest tests/test_runtime_persistence.py tests/test_runtime.py tests/test_storage.py`
+    passed with 11 tests.
+  - `uv run ruff check src/bybit_automation/app.py src/bybit_automation/storage tests/test_runtime_persistence.py tests/test_storage.py`
+    passed.

@@ -11,6 +11,7 @@ from bybit_automation.orders import OrderIntent, OrderManager, OrderResult
 from bybit_automation.positions import Position, PositionManager
 from bybit_automation.risk import RiskDecision, RiskManager
 from bybit_automation.state import RuntimeState
+from bybit_automation.storage import PersistenceRepositories
 from bybit_automation.strategy import StrategyDecision, StrategyEngine
 
 
@@ -33,11 +34,13 @@ class BotRuntime:
         exchange: ExchangeClient | None = None,
         state: RuntimeState | None = None,
         notifier: Notifier | None = None,
+        repositories: PersistenceRepositories | None = None,
     ) -> None:
         self.config = config
         self.state = state or RuntimeState()
         self.exchange = exchange or create_exchange_client(config)
         self.notifier = notifier or Notifier()
+        self.repositories = repositories
         self.strategy = StrategyEngine()
         self.risk = RiskManager()
         self.positions = PositionManager(self.state)
@@ -45,6 +48,7 @@ class BotRuntime:
             dry_run=config.app.mode == "dry_run",
             executor=self.exchange,
         )
+        self._restore_trailing_state()
 
     def run_once(
         self,
@@ -56,17 +60,34 @@ class BotRuntime:
 
         current_positions = self.exchange.fetch_positions()
         self.positions.sync_positions(current_positions)
+        if self.repositories is not None:
+            self.repositories.positions.append_many(current_positions)
 
         risk_decisions: list[RiskDecision] = []
         order_results: list[OrderResult] = []
         if include_risk:
             risk_decisions = self._evaluate_risk(current_positions)
-            order_results = self._execute_risk_orders(risk_decisions)
+            if self.repositories is not None:
+                self.repositories.risk_events.append_many(risk_decisions)
+                self._persist_trailing_state(risk_decisions)
+            risk_order_results = self._execute_risk_orders(risk_decisions)
+            self._persist_order_results(risk_order_results)
+            order_results.extend(risk_order_results)
 
         strategy_decisions: list[StrategyDecision] = []
         if include_strategy and not self.state.safe_mode:
             strategy_decisions = self._evaluate_strategy(current_positions)
-            order_results.extend(self._execute_strategy_orders(strategy_decisions))
+            if self.repositories is not None:
+                self.repositories.strategy_decisions.append_many(strategy_decisions)
+            strategy_order_results = self._execute_strategy_orders(strategy_decisions)
+            self._persist_order_results(strategy_order_results)
+            order_results.extend(strategy_order_results)
+
+        self._persist_bot_state(
+            positions_seen=len(current_positions),
+            ran_risk=include_risk,
+            ran_strategy=include_strategy and not self.state.safe_mode,
+        )
 
         return RuntimeReport(
             positions_seen=len(current_positions),
@@ -77,6 +98,14 @@ class BotRuntime:
             ran_risk=include_risk,
             ran_strategy=include_strategy and not self.state.safe_mode,
         )
+
+    def _restore_trailing_state(self) -> None:
+        if self.repositories is None:
+            return
+        for symbol, saved_state in self.repositories.trailing_state.load_all().items():
+            symbol_state = self.state.get_symbol(symbol)
+            symbol_state.highest_profit_pct = saved_state.highest_profit_pct
+            symbol_state.trailing_tier = saved_state.trailing_tier
 
     def _evaluate_risk(self, positions: list[Position]) -> list[RiskDecision]:
         decisions: list[RiskDecision] = []
@@ -164,3 +193,34 @@ class BotRuntime:
                 )
             )
         return results
+
+    def _persist_trailing_state(self, decisions: list[RiskDecision]) -> None:
+        if self.repositories is None:
+            return
+        for decision in decisions:
+            self.repositories.trailing_state.save(self.state.get_symbol(decision.symbol))
+
+    def _persist_order_results(self, results: list[OrderResult]) -> None:
+        if self.repositories is None:
+            return
+        for result in results:
+            self.repositories.orders.append_result(result)
+
+    def _persist_bot_state(
+        self,
+        *,
+        positions_seen: int,
+        ran_risk: bool,
+        ran_strategy: bool,
+    ) -> None:
+        if self.repositories is None:
+            return
+        self.repositories.bot_state.set_json(
+            "last_tick",
+            {
+                "positions_seen": positions_seen,
+                "safe_mode": self.state.safe_mode,
+                "ran_risk": ran_risk,
+                "ran_strategy": ran_strategy,
+            },
+        )
