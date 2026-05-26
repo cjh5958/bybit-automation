@@ -894,12 +894,13 @@ strictly needed to prove persistence; those belong to Phase 3.
 
 ## Immediate Next Recommended Step
 
-Start Phase 2:
+Start Phase 3:
 
-1. Add a thin SQLite connection/bootstrap module.
-2. Enable WAL mode based on `[database.sqlite].wal`.
-3. Add schema bootstrap for orders, order events, position snapshots, strategy
-   decisions, risk events, bot state, config versions, and trailing state.
-4. Add repository tests using temporary SQLite databases.
-5. Keep runtime behavior in `dry_run` unless the user explicitly approves demo
+1. Fetch open orders and active positions on startup.
+2. Compare exchange state with SQLite state.
+3. Implement `SAFE_MODE` for inconsistent startup state.
+4. Pause new entries while startup state is inconsistent.
+5. Add graceful shutdown behavior.
+6. Add reconciliation and safe-mode transition tests using fake exchange data.
+7. Keep runtime behavior in `dry_run` unless the user explicitly approves demo
    or live exchange checks.

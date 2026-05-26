@@ -63,3 +63,22 @@
     passed with 8 tests.
   - `uv run ruff check src/bybit_automation/main.py tests/test_main.py`
     passed.
+- Committed and pushed config/CLI slice:
+  - `557bc4b feat: record config versions on startup`
+- Completed Phase 2 documentation and handoff updates:
+  - marked all Phase 2 TODO items complete,
+  - updated README to describe SQLite persistence and Phase 3 readiness,
+  - updated `.agents/AGENTS.md` immediate next step to Phase 3,
+  - corrected package docstring naming.
+- Final Phase 2 verification:
+  - `uv run pytest` passed with 39 tests.
+  - `uv run ruff check .` passed.
+  - `uv run bybit-automation` passed and stayed in `dry_run` mode.
+- Runtime artifact note:
+  - CLI smoke created `data/bot.sqlite3` locally as expected,
+  - `data/` is ignored by git.
+- Phase 2 is complete according to `.agents/TODO.md`.
+- Known remaining work moves to Phase 3:
+  - startup reconciliation against exchange open orders and positions,
+  - `SAFE_MODE` transitions,
+  - graceful shutdown behavior.

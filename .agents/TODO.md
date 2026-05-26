@@ -25,6 +25,7 @@ Rules:
 - [x] Define standard Git workflow for future agents.
 - [x] Rename package and CLI to `bybit_automation` / `bybit-automation`.
 - [x] Complete Phase 1 single-process REST-based runtime foundation.
+- [x] Complete Phase 2 SQLite persistence foundation.
 
 ## Phase 0: Project Foundation with `uv`
 
@@ -63,14 +64,14 @@ Rules:
 
 ## Phase 2: SQLite Persistence
 
-- [ ] Add SQLite connection/bootstrap module.
-- [ ] Enable WAL mode.
-- [ ] Add schema for orders and order events.
-- [ ] Add schema for position snapshots.
-- [ ] Add schema for strategy decisions and risk events.
-- [ ] Add schema for bot state and config versions.
-- [ ] Persist trailing state such as highest profit and current tier.
-- [ ] Add repository tests using temporary SQLite databases.
+- [x] Add SQLite connection/bootstrap module.
+- [x] Enable WAL mode.
+- [x] Add schema for orders and order events.
+- [x] Add schema for position snapshots.
+- [x] Add schema for strategy decisions and risk events.
+- [x] Add schema for bot state and config versions.
+- [x] Persist trailing state such as highest profit and current tier.
+- [x] Add repository tests using temporary SQLite databases.
 
 ## Phase 3: Safe Startup and Reconciliation
 
