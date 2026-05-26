@@ -737,6 +737,11 @@ direction.
 - Do not rely on Redis as the only record of trading state.
 - SQLite should be treated as the durable local record, while exchange state
   remains the external authority that must be reconciled.
+- Phase 2 persists per-symbol trailing state. Phase 3 must define its lifecycle:
+  when reconciliation proves a position is closed, clear or archive stale
+  `symbol_trailing_state` before allowing a future new position for that symbol
+  to reuse runtime state. A new position must not inherit an old position's
+  `highest_profit_pct` or `trailing_tier`.
 
 ### Testing and Verification Requirements
 
@@ -768,6 +773,10 @@ direction.
   workspace avoids that startup friction.
 - If `.venv` points to a missing Python interpreter, let `uv` recreate it after
   setting `UV_CACHE_DIR` and `UV_PYTHON_INSTALL_DIR`.
+- Since Phase 2, the CLI smoke test `uv run bybit-automation` opens the
+  configured SQLite database and writes runtime records. With the template
+  config this creates or updates `data/bot.sqlite3`; this is expected and
+  `data/` is ignored by git.
 - At the start of coding work in a new session or on a new machine, inspect the
   development environment before making assumptions. Check at least:
   - current shell and OS,
@@ -841,6 +850,12 @@ If verification cannot run because of environment problems, record the issue in
 the active phase log and final response. Do not claim a verification passed when
 it did not run.
 
+Environment note: previous sessions needed escalated permissions for git
+metadata operations when normal `git add` or `git commit` failed with
+`.git/index.lock` permission errors. Treat that as a workspace permission issue,
+not as a reason to delete lock files or reset the repository. Retry the same git
+operation with the appropriate approval/escalation path.
+
 ### Shared TODO Rules
 
 - `.agents/TODO.md` is the canonical cross-agent task list.
@@ -899,8 +914,12 @@ Start Phase 3:
 1. Fetch open orders and active positions on startup.
 2. Compare exchange state with SQLite state.
 3. Implement `SAFE_MODE` for inconsistent startup state.
-4. Pause new entries while startup state is inconsistent.
-5. Add graceful shutdown behavior.
-6. Add reconciliation and safe-mode transition tests using fake exchange data.
-7. Keep runtime behavior in `dry_run` unless the user explicitly approves demo
+4. Define and test trailing-state lifecycle during reconciliation:
+   - keep matching active-position trailing state,
+   - clear or archive stale trailing state for confirmed closed positions,
+   - ensure new positions do not inherit stale highest-profit or tier values.
+5. Pause new entries while startup state is inconsistent.
+6. Add graceful shutdown behavior.
+7. Add reconciliation and safe-mode transition tests using fake exchange data.
+8. Keep runtime behavior in `dry_run` unless the user explicitly approves demo
    or live exchange checks.

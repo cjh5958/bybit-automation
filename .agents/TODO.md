@@ -78,6 +78,8 @@ Rules:
 - [ ] Fetch open orders on startup.
 - [ ] Fetch active positions on startup.
 - [ ] Compare exchange state with SQLite state.
+- [ ] Clear or archive stale trailing state for confirmed closed positions.
+- [ ] Prevent new positions from inheriting stale trailing state.
 - [ ] Implement `SAFE_MODE`.
 - [ ] Pause new entries when startup state is inconsistent.
 - [ ] Add graceful shutdown behavior.
