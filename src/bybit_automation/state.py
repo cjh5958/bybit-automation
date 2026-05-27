@@ -30,9 +30,9 @@ class SymbolRuntimeState:
 class RuntimeState:
     symbols: dict[str, SymbolRuntimeState] = field(default_factory=dict)
     safe_mode: bool = False
+    safe_mode_reason: str | None = None
 
     def get_symbol(self, symbol: str) -> SymbolRuntimeState:
         if symbol not in self.symbols:
             self.symbols[symbol] = SymbolRuntimeState(symbol=symbol)
         return self.symbols[symbol]
-

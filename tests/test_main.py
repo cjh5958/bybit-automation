@@ -22,6 +22,10 @@ def test_run_with_config_bootstraps_sqlite_and_records_config(tmp_path: Path) ->
         assert result == 0
         assert conn.execute("SELECT COUNT(*) FROM config_versions").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM strategy_decisions").fetchone()[0] == 2
-        assert conn.execute("SELECT COUNT(*) FROM bot_state").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM bot_state").fetchone()[0] == 3
+        shutdown = conn.execute(
+            "SELECT value_json FROM bot_state WHERE key = 'shutdown'"
+        ).fetchone()[0]
+        assert '"reason": "completed"' in shutdown
     finally:
         conn.close()

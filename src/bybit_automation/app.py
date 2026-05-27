@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
 
 from bybit_automation.calculations import convert_usdt_to_contract_amount, round_price_to_tick
 from bybit_automation.config import BotConfig
@@ -9,6 +10,11 @@ from bybit_automation.log import configure_logging
 from bybit_automation.notifier import Notifier
 from bybit_automation.orders import OrderIntent, OrderManager, OrderResult
 from bybit_automation.positions import Position, PositionManager
+from bybit_automation.reconciliation import (
+    ReconciliationReport,
+    build_reconciliation_report,
+    failed_reconciliation_report,
+)
 from bybit_automation.risk import RiskDecision, RiskManager
 from bybit_automation.state import RuntimeState
 from bybit_automation.storage import PersistenceRepositories
@@ -22,6 +28,7 @@ class RuntimeReport:
     risk_decisions: tuple[RiskDecision, ...]
     order_results: tuple[OrderResult, ...]
     safe_mode: bool
+    safe_mode_reason: str | None
     ran_risk: bool
     ran_strategy: bool
 
@@ -49,6 +56,7 @@ class BotRuntime:
             executor=self.exchange,
         )
         self._restore_trailing_state()
+        self.startup_reconciliation = self._reconcile_startup()
 
     def run_once(
         self,
@@ -95,8 +103,21 @@ class BotRuntime:
             risk_decisions=tuple(risk_decisions),
             order_results=tuple(order_results),
             safe_mode=self.state.safe_mode,
+            safe_mode_reason=self.state.safe_mode_reason,
             ran_risk=include_risk,
             ran_strategy=include_strategy and not self.state.safe_mode,
+        )
+
+    def shutdown(self, *, reason: Literal["completed", "keyboard_interrupt", "error"]) -> None:
+        if self.repositories is None:
+            return
+        self.repositories.bot_state.set_json(
+            "shutdown",
+            {
+                "reason": reason,
+                "safe_mode": self.state.safe_mode,
+                "safe_mode_reason": self.state.safe_mode_reason,
+            },
         )
 
     def _restore_trailing_state(self) -> None:
@@ -106,6 +127,43 @@ class BotRuntime:
             symbol_state = self.state.get_symbol(symbol)
             symbol_state.highest_profit_pct = saved_state.highest_profit_pct
             symbol_state.trailing_tier = saved_state.trailing_tier
+
+    def _reconcile_startup(self) -> ReconciliationReport | None:
+        if self.repositories is None:
+            return None
+
+        try:
+            exchange_positions = self.exchange.fetch_positions()
+            exchange_open_orders = self.exchange.fetch_open_orders()
+            report = build_reconciliation_report(
+                exchange_positions=exchange_positions,
+                exchange_open_orders=exchange_open_orders,
+                local_positions=self.repositories.positions.latest_by_symbol(),
+                local_orders=self.repositories.orders.list_submitted(),
+                trailing_states=self.repositories.trailing_state.load_all(),
+            )
+        except Exception as exc:  # noqa: BLE001 - startup reconciliation must fail closed.
+            report = failed_reconciliation_report(str(exc))
+
+        self._apply_reconciliation_report(report)
+        return report
+
+    def _apply_reconciliation_report(self, report: ReconciliationReport) -> None:
+        if report.safe_mode_required and self.config.runtime.safe_mode_on_startup_mismatch:
+            self.state.safe_mode = True
+            self.state.safe_mode_reason = _safe_mode_reason(report)
+
+        if not report.safe_mode_required:
+            for symbol in report.stale_trailing_state_symbols:
+                self.repositories.trailing_state.delete(symbol)
+                symbol_state = self.state.get_symbol(symbol)
+                symbol_state.highest_profit_pct = 0.0
+                symbol_state.trailing_tier = -1
+
+        self.repositories.bot_state.set_json(
+            "last_reconciliation",
+            _reconciliation_payload(report, safe_mode=self.state.safe_mode),
+        )
 
     def _evaluate_risk(self, positions: list[Position]) -> list[RiskDecision]:
         decisions: list[RiskDecision] = []
@@ -220,7 +278,38 @@ class BotRuntime:
             {
                 "positions_seen": positions_seen,
                 "safe_mode": self.state.safe_mode,
+                "safe_mode_reason": self.state.safe_mode_reason,
                 "ran_risk": ran_risk,
                 "ran_strategy": ran_strategy,
             },
         )
+
+
+def _safe_mode_reason(report: ReconciliationReport) -> str | None:
+    for issue in report.issues:
+        if issue.severity == "safe_mode":
+            return issue.code
+    return None
+
+
+def _reconciliation_payload(
+    report: ReconciliationReport,
+    *,
+    safe_mode: bool,
+) -> dict:
+    return {
+        "safe_mode": safe_mode,
+        "safe_mode_required": report.safe_mode_required,
+        "exchange_positions": len(report.exchange_positions),
+        "exchange_open_orders": len(report.exchange_open_orders),
+        "stale_trailing_state_symbols": list(report.stale_trailing_state_symbols),
+        "issues": [
+            {
+                "severity": issue.severity,
+                "code": issue.code,
+                "symbol": issue.symbol,
+                "message": issue.message,
+            }
+            for issue in report.issues
+        ],
+    }
