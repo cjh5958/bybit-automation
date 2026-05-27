@@ -27,6 +27,7 @@ Rules:
 - [x] Complete Phase 1 single-process REST-based runtime foundation.
 - [x] Complete Phase 2 SQLite persistence foundation.
 - [x] Define cross-platform minimum development environment and rebuild steps.
+- [x] Complete Phase 3 safe startup and reconciliation foundation.
 
 ## Pre-Phase 3: Development Environment Standardization
 
@@ -83,15 +84,15 @@ Rules:
 
 ## Phase 3: Safe Startup and Reconciliation
 
-- [ ] Fetch open orders on startup.
-- [ ] Fetch active positions on startup.
-- [ ] Compare exchange state with SQLite state.
-- [ ] Clear or archive stale trailing state for confirmed closed positions.
-- [ ] Prevent new positions from inheriting stale trailing state.
-- [ ] Implement `SAFE_MODE`.
-- [ ] Pause new entries when startup state is inconsistent.
-- [ ] Add graceful shutdown behavior.
-- [ ] Add tests for reconciliation and safe-mode transitions.
+- [x] Fetch open orders on startup.
+- [x] Fetch active positions on startup.
+- [x] Compare exchange state with SQLite state.
+- [x] Clear stale trailing state for confirmed closed positions.
+- [x] Prevent new positions from inheriting stale trailing state.
+- [x] Implement `SAFE_MODE`.
+- [x] Pause new entries when startup state is inconsistent.
+- [x] Add graceful shutdown behavior.
+- [x] Add tests for reconciliation and safe-mode transitions.
 
 ## Phase 4: Redis Cache and Coordination
 

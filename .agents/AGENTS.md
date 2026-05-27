@@ -986,17 +986,13 @@ strictly needed to prove persistence; those belong to Phase 3.
 
 ## Immediate Next Recommended Step
 
-Start Phase 3:
+Start Phase 4:
 
-1. Fetch open orders and active positions on startup.
-2. Compare exchange state with SQLite state.
-3. Implement `SAFE_MODE` for inconsistent startup state.
-4. Define and test trailing-state lifecycle during reconciliation:
-   - keep matching active-position trailing state,
-   - clear or archive stale trailing state for confirmed closed positions,
-   - ensure new positions do not inherit stale highest-profit or tier values.
-5. Pause new entries while startup state is inconsistent.
-6. Add graceful shutdown behavior.
-7. Add reconciliation and safe-mode transition tests using fake exchange data.
-8. Keep runtime behavior in `dry_run` unless the user explicitly approves demo
+1. Add a thin Redis cache abstraction.
+2. Cache latest prices, recent K-line data, open orders, and active positions.
+3. Add per-symbol lock semantics for short-lived coordination.
+4. Define and test behavior when Redis is unavailable.
+5. Keep SQLite as the durable source of local state.
+6. Keep REST reconciliation as the authoritative correction path.
+7. Keep runtime behavior in `dry_run` unless the user explicitly approves demo
    or live exchange checks.

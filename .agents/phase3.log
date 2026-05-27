@@ -40,3 +40,55 @@
   - `uv run ruff check .` passed.
   - `uv run bybit-automation` passed and stayed in `dry_run` mode.
   - No trading runtime behavior was changed.
+
+## 2026-05-27 Phase 3 Implementation
+
+- Implemented exchange open-order snapshots:
+  - added `OpenOrder`,
+  - added `ExchangeClient.fetch_open_orders()`,
+  - kept `DryRunExchangeClient` returning empty snapshots,
+  - added ccxt parsing for read-only open order reconciliation.
+- Added SQLite repository read helpers for reconciliation:
+  - latest position snapshot by symbol,
+  - submitted order records,
+  - stale trailing-state deletion.
+- Added pure reconciliation logic in `bybit_automation.reconciliation`:
+  - detects stale trailing state when exchange confirms no active position,
+  - flags unknown exchange open orders as `SAFE_MODE`,
+  - flags exchange snapshot failures as `SAFE_MODE`,
+  - treats stale local position snapshots as warnings when exchange is flat.
+- Integrated startup reconciliation into `BotRuntime` when repositories are
+  available:
+  - fetches active positions and open orders before the first runtime tick,
+  - compares exchange snapshots with SQLite records,
+  - clears confirmed stale trailing state before future positions can inherit it,
+  - sets `RuntimeState.safe_mode` and `safe_mode_reason` when startup state is
+    unsafe,
+  - persists `last_reconciliation` in `bot_state`.
+- Added SAFE_MODE behavior:
+  - strategy entry evaluation and order intents are paused while safe mode is
+    active,
+  - risk evaluation remains available for known positions.
+- Added basic graceful shutdown behavior:
+  - `BotRuntime.shutdown()` persists final shutdown state,
+  - CLI records normal completion, keyboard interrupt, or error shutdown reason,
+  - SQLite connections still close in `finally`.
+- Tests added or updated:
+  - exchange open-order parsing,
+  - repository reconciliation reads,
+  - pure reconciliation reports,
+  - startup stale trailing-state cleanup,
+  - startup safe mode for unknown exchange orders and snapshot failures,
+  - shutdown state persistence.
+- Verification:
+  - `uv run pytest` passed with 52 tests.
+  - `uv run ruff check .` passed.
+  - `uv run bybit-automation` passed and stayed in `dry_run` mode.
+- Notes:
+  - No live Bybit credentials were used.
+  - No live/demo order placement was tested.
+  - The untracked local `tools/` directory was intentionally ignored.
+  - Added `.DS_Store` to `.gitignore` after macOS generated a local metadata
+    file during verification.
+  - The local shell still required `/Users/chchu/.local/bin/uv` in commands
+    during this run; project-local uv/Python directories worked as expected.
