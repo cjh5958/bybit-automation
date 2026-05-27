@@ -1,0 +1,56 @@
+# Phase 4 Log
+
+## 2026-05-27
+
+- Started Phase 4 on branch `dev` with a clean worktree.
+- Local environment notes:
+  - `uv` was not available on `PATH` in this shell.
+  - Used `/Users/chchu/.local/bin/uv` with project-local `UV_CACHE_DIR=.uv-cache`
+    and `UV_PYTHON_INSTALL_DIR=.uv-python`, matching the Phase 3 environment
+    guidance.
+  - The first dependency update attempt failed inside the sandbox because PyPI
+    DNS/network access was unavailable.
+  - Re-ran `uv add redis` with approved network access.
+- Added Redis dependency:
+  - `redis>=7.4.0` in `pyproject.toml`,
+  - refreshed `uv.lock`.
+- Implemented Redis cache and coordination foundation:
+  - added `RealtimeCache` protocol,
+  - added `NoopRealtimeCache`,
+  - added `RedisRealtimeCache` using namespaced JSON keys,
+  - added cache factory from existing Redis config,
+  - added market snapshot, position snapshot, and open-order cache operations,
+  - added per-symbol lock acquire/release semantics,
+  - added config reload signal primitives without applying hot reload.
+- Extended market snapshots:
+  - `MarketSnapshot` now carries optional raw OHLCV data so recent K-lines can be
+    cached without changing strategy behavior.
+- Added `CachedExchangeClient`:
+  - writes successful REST reads into realtime cache,
+  - uses cached market snapshots only when fresh exchange market fetch fails,
+  - does not use Redis as fallback for startup reconciliation positions or open
+    orders.
+- Integrated cache into CLI startup:
+  - creates realtime cache from config,
+  - records cache health in SQLite `bot_state`,
+  - wraps the concrete exchange client before constructing `BotRuntime`.
+- Tests added:
+  - no-op cache behavior,
+  - Redis cache serialization/deserialization through fake Redis,
+  - Redis symbol lock ownership/release behavior,
+  - config reload signal primitives,
+  - Redis operation failure degradation,
+  - cached exchange write-through and market fallback,
+  - startup reconciliation through the cache wrapper still uses exchange
+    snapshots.
+- Initial focused verification:
+  - `uv run pytest tests/test_cache.py tests/test_runtime_persistence.py tests/test_exchange_client.py`
+    passed with 22 tests.
+- Final Phase 4 verification:
+  - `uv sync --locked` passed.
+  - `uv run pytest` passed with 60 tests.
+  - `uv run ruff check .` passed.
+  - `uv run bybit-automation` passed and stayed in `dry_run` mode.
+- No live Bybit credentials were used.
+- No Redis server, Docker service, or network Redis instance was required for
+  unit tests.

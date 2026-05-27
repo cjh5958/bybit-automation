@@ -28,6 +28,7 @@ Rules:
 - [x] Complete Phase 2 SQLite persistence foundation.
 - [x] Define cross-platform minimum development environment and rebuild steps.
 - [x] Complete Phase 3 safe startup and reconciliation foundation.
+- [x] Complete Phase 4 Redis cache and coordination foundation.
 
 ## Pre-Phase 3: Development Environment Standardization
 
@@ -96,12 +97,12 @@ Rules:
 
 ## Phase 4: Redis Cache and Coordination
 
-- [ ] Add Redis cache abstraction.
-- [ ] Cache latest prices and recent K-line data.
-- [ ] Cache active positions and open orders.
-- [ ] Add per-symbol lock semantics.
-- [ ] Add config reload signal mechanism.
-- [ ] Define and test Redis unavailable behavior.
+- [x] Add Redis cache abstraction.
+- [x] Cache latest prices and recent K-line data.
+- [x] Cache active positions and open orders.
+- [x] Add per-symbol lock semantics.
+- [x] Add config reload signal mechanism.
+- [x] Define and test Redis unavailable behavior.
 
 ## Phase 5: WebSocket Synchronization
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import json
 import sqlite3
 
 from bybit_automation.main import run_with_config
@@ -22,7 +23,15 @@ def test_run_with_config_bootstraps_sqlite_and_records_config(tmp_path: Path) ->
         assert result == 0
         assert conn.execute("SELECT COUNT(*) FROM config_versions").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM strategy_decisions").fetchone()[0] == 2
-        assert conn.execute("SELECT COUNT(*) FROM bot_state").fetchone()[0] == 3
+        assert conn.execute("SELECT COUNT(*) FROM bot_state").fetchone()[0] == 4
+        cache_health = conn.execute(
+            "SELECT value_json FROM bot_state WHERE key = 'cache_health'"
+        ).fetchone()[0]
+        assert json.loads(cache_health) == {
+            "available": False,
+            "enabled": False,
+            "message": "redis disabled",
+        }
         shutdown = conn.execute(
             "SELECT value_json FROM bot_state WHERE key = 'shutdown'"
         ).fetchone()[0]

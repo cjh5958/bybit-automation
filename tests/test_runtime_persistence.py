@@ -4,6 +4,7 @@ from pathlib import Path
 import sqlite3
 
 from bybit_automation.app import BotRuntime
+from bybit_automation.cache import CachedExchangeClient, NoopRealtimeCache
 from bybit_automation.config import parse_config
 from bybit_automation.exchange_client import MarketSnapshot, OpenOrder, TradingRules
 from bybit_automation.positions import Position
@@ -206,6 +207,37 @@ def test_startup_reconciliation_enters_safe_mode_for_unknown_open_order(
         "safe_mode": True,
         "safe_mode_reason": "unknown_exchange_open_order",
     }
+
+    conn.close()
+
+
+def test_startup_reconciliation_uses_exchange_snapshot_through_cache_wrapper(
+    tmp_path: Path,
+) -> None:
+    raw = valid_raw_config()
+    raw["symbols"] = [{"symbol": "MOODENG/USDT:USDT", "enabled": True}]
+    config = parse_config(raw, resolve_secrets=False)
+    repositories, conn = repositories_for(tmp_path)
+    exchange = CachedExchangeClient(
+        PersistentFakeExchange(
+            open_orders=[
+                OpenOrder(
+                    exchange_order_id="exchange-only",
+                    symbol="MOODENG/USDT:USDT",
+                    side="buy",
+                    amount=1,
+                    price=97,
+                    status="open",
+                )
+            ]
+        ),
+        NoopRealtimeCache(),
+    )
+
+    runtime = BotRuntime(config, exchange=exchange, repositories=repositories)
+
+    assert runtime.state.safe_mode is True
+    assert runtime.state.safe_mode_reason == "unknown_exchange_open_order"
 
     conn.close()
 

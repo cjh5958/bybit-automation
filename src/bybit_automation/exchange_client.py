@@ -22,6 +22,7 @@ class MarketSnapshot:
     close_prices: tuple[float, ...]
     atr_pct: float
     average_amplitude_pct: float
+    ohlcv: tuple[tuple[float, ...], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -150,6 +151,7 @@ class CcxtBybitExchangeClient:
                 klines,
                 period=self._volatility_period,
             ),
+            ohlcv=tuple(tuple(float(value) for value in kline) for kline in klines),
         )
 
     def fetch_trading_rules(self, symbol: str) -> TradingRules:

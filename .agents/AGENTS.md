@@ -986,13 +986,15 @@ strictly needed to prove persistence; those belong to Phase 3.
 
 ## Immediate Next Recommended Step
 
-Start Phase 4:
+Start Phase 5:
 
-1. Add a thin Redis cache abstraction.
-2. Cache latest prices, recent K-line data, open orders, and active positions.
-3. Add per-symbol lock semantics for short-lived coordination.
-4. Define and test behavior when Redis is unavailable.
-5. Keep SQLite as the durable source of local state.
-6. Keep REST reconciliation as the authoritative correction path.
+1. Add public market WebSocket ingestion behind a thin abstraction.
+2. Add private order/position/execution WebSocket ingestion behind explicit mode
+   guards.
+3. Add heartbeat monitoring and reconnect with backoff.
+4. Add stale-data detection.
+5. Keep REST reconciliation as the authoritative correction path.
+6. Keep Redis as a rebuildable realtime cache and coordination layer, not a
+   durable source of truth.
 7. Keep runtime behavior in `dry_run` unless the user explicitly approves demo
    or live exchange checks.

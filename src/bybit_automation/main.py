@@ -3,7 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 
 from bybit_automation.app import BotRuntime
+from bybit_automation.cache import CachedExchangeClient, create_realtime_cache
 from bybit_automation.config import ConfigError, load_config
+from bybit_automation.exchange_client import create_exchange_client
 from bybit_automation.storage import PersistenceRepositories, connect_sqlite
 
 
@@ -30,7 +32,17 @@ def run_with_config(config_path: Path) -> int:
     try:
         repositories = PersistenceRepositories.from_connection(conn)
         repositories.config_versions.record_file(config_path)
-        runtime = BotRuntime(config, repositories=repositories)
+        cache = create_realtime_cache(config.redis)
+        repositories.bot_state.set_json(
+            "cache_health",
+            {
+                "enabled": cache.health.enabled,
+                "available": cache.health.available,
+                "message": cache.health.message,
+            },
+        )
+        exchange = CachedExchangeClient(create_exchange_client(config), cache)
+        runtime = BotRuntime(config, exchange=exchange, repositories=repositories)
         report = runtime.run_once()
         print(
             "bybit-automation runtime tick OK "
