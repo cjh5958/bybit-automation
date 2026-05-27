@@ -27,6 +27,30 @@ class TrailingStateRecord:
     trailing_tier: int
 
 
+@dataclass(frozen=True)
+class PositionSnapshotRecord:
+    symbol: str
+    side: str
+    size: float
+    entry_price: float
+    mark_price: float
+    profit_pct: float
+    created_at: str
+
+
+@dataclass(frozen=True)
+class OrderRecord:
+    symbol: str
+    action: str
+    side: str | None
+    amount: float
+    price: float | None
+    submitted: bool
+    dry_run: bool
+    exchange_order_id: str | None
+    created_at: str
+
+
 class PositionSnapshotRepository:
     def __init__(self, conn: sqlite3.Connection) -> None:
         self._conn = conn
@@ -54,6 +78,31 @@ class PositionSnapshotRepository:
                     for position in positions
                 ],
             )
+
+    def latest_by_symbol(self) -> dict[str, PositionSnapshotRecord]:
+        rows = self._conn.execute(
+            """
+            SELECT created_at, symbol, side, size, entry_price, mark_price, profit_pct
+            FROM position_snapshots
+            WHERE id IN (
+                SELECT MAX(id)
+                FROM position_snapshots
+                GROUP BY symbol
+            )
+            """
+        ).fetchall()
+        return {
+            str(row["symbol"]): PositionSnapshotRecord(
+                symbol=str(row["symbol"]),
+                side=str(row["side"]),
+                size=float(row["size"]),
+                entry_price=float(row["entry_price"]),
+                mark_price=float(row["mark_price"]),
+                profit_pct=float(row["profit_pct"]),
+                created_at=str(row["created_at"]),
+            )
+            for row in rows
+        }
 
 
 class StrategyDecisionRepository:
@@ -168,6 +217,18 @@ class OrderRepository:
             )
             return order_id
 
+    def list_submitted(self) -> list[OrderRecord]:
+        rows = self._conn.execute(
+            """
+            SELECT created_at, action, symbol, side, amount, price, submitted, dry_run,
+                   exchange_order_id
+            FROM orders
+            WHERE submitted = 1
+            ORDER BY id
+            """
+        ).fetchall()
+        return [_order_record_from_row(row) for row in rows]
+
 
 class TrailingStateRepository:
     def __init__(self, conn: sqlite3.Connection) -> None:
@@ -235,6 +296,13 @@ class TrailingStateRepository:
             )
             for row in rows
         }
+
+    def delete(self, symbol: str) -> None:
+        with self._conn:
+            self._conn.execute(
+                "DELETE FROM symbol_trailing_state WHERE symbol = ?",
+                (symbol,),
+            )
 
 
 class BotStateRepository:
@@ -341,3 +409,19 @@ def _order_event_type(result: OrderResult) -> str:
     if result.submitted:
         return "submitted"
     return "recorded"
+
+
+def _order_record_from_row(row: sqlite3.Row) -> OrderRecord:
+    return OrderRecord(
+        symbol=str(row["symbol"]),
+        action=str(row["action"]),
+        side=str(row["side"]) if row["side"] is not None else None,
+        amount=float(row["amount"]),
+        price=float(row["price"]) if row["price"] is not None else None,
+        submitted=bool(row["submitted"]),
+        dry_run=bool(row["dry_run"]),
+        exchange_order_id=(
+            str(row["exchange_order_id"]) if row["exchange_order_id"] is not None else None
+        ),
+        created_at=str(row["created_at"]),
+    )

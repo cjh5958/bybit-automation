@@ -6,6 +6,7 @@ from bybit_automation.config import ConfigError, parse_config
 from bybit_automation.exchange_client import (
     CcxtBybitExchangeClient,
     DryRunExchangeClient,
+    OpenOrder,
     create_exchange_client,
 )
 from tests.factories import valid_raw_config
@@ -74,9 +75,30 @@ class FakeCcxtExchange:
         self.created_orders.append(order)
         return order
 
-    def fetch_open_orders(self, symbol: str, params: dict) -> list[dict]:
-        assert symbol == "MOODENG/USDT:USDT"
+    def fetch_open_orders(self, symbol: str | None = None, params: dict | None = None) -> list[dict]:
         assert params == {"orderFilter": "Order"}
+        if symbol is None:
+            return [
+                {
+                    "id": "order-1",
+                    "symbol": "MOODENG/USDT:USDT",
+                    "side": "buy",
+                    "amount": 1.5,
+                    "price": 97,
+                    "status": "open",
+                    "info": {},
+                },
+                {
+                    "id": "order-2",
+                    "symbol": "MOODENG/USDT:USDT",
+                    "side": "sell",
+                    "amount": 2,
+                    "price": 104,
+                    "status": "open",
+                    "info": {},
+                },
+            ]
+        assert symbol == "MOODENG/USDT:USDT"
         return [{"id": "order-1"}, {"id": "order-2"}]
 
     def cancel_order(self, order_id: str, symbol: str) -> None:
@@ -89,6 +111,12 @@ def test_create_exchange_client_returns_dry_run_client() -> None:
     client = create_exchange_client(config)
 
     assert isinstance(client, DryRunExchangeClient)
+
+
+def test_dry_run_client_returns_empty_open_orders() -> None:
+    client = DryRunExchangeClient()
+
+    assert client.fetch_open_orders() == []
 
 
 def test_ccxt_client_rejects_dry_run_config() -> None:
@@ -136,6 +164,31 @@ def test_ccxt_client_reads_trading_rules() -> None:
 
     assert rules.tick_size == 0.01
     assert rules.min_amount == 0.001
+
+
+def test_ccxt_client_parses_open_orders() -> None:
+    client = CcxtBybitExchangeClient(exchange=FakeCcxtExchange())
+
+    orders = client.fetch_open_orders()
+
+    assert orders == [
+        OpenOrder(
+            exchange_order_id="order-1",
+            symbol="MOODENG/USDT:USDT",
+            side="buy",
+            amount=1.5,
+            price=97,
+            status="open",
+        ),
+        OpenOrder(
+            exchange_order_id="order-2",
+            symbol="MOODENG/USDT:USDT",
+            side="sell",
+            amount=2,
+            price=104,
+            status="open",
+        ),
+    ]
 
 
 def test_ccxt_client_submits_orders_and_cancels_open_orders() -> None:

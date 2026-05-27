@@ -31,8 +31,21 @@ class TradingRules:
     min_amount: float
 
 
+@dataclass(frozen=True)
+class OpenOrder:
+    exchange_order_id: str
+    symbol: str
+    side: OrderSide | None
+    amount: float
+    price: float | None
+    status: str
+
+
 class ExchangeClient(Protocol):
     def fetch_positions(self) -> list[Position]:
+        raise NotImplementedError
+
+    def fetch_open_orders(self) -> list[OpenOrder]:
         raise NotImplementedError
 
     def fetch_market_snapshot(self, symbol: str) -> MarketSnapshot | None:
@@ -49,6 +62,9 @@ class DryRunExchangeClient:
     """
 
     def fetch_positions(self) -> list[Position]:
+        return []
+
+    def fetch_open_orders(self) -> list[OpenOrder]:
         return []
 
     def fetch_market_snapshot(self, symbol: str) -> MarketSnapshot | None:
@@ -102,6 +118,15 @@ class CcxtBybitExchangeClient:
             if position is not None:
                 positions.append(position)
         return positions
+
+    def fetch_open_orders(self) -> list[OpenOrder]:
+        raw_orders = self._exchange.fetch_open_orders(params={"orderFilter": "Order"})
+        orders: list[OpenOrder] = []
+        for raw_order in raw_orders:
+            order = _parse_open_order(raw_order)
+            if order is not None:
+                orders.append(order)
+        return orders
 
     def fetch_market_snapshot(self, symbol: str) -> MarketSnapshot | None:
         ticker = self._exchange.fetch_ticker(symbol)
@@ -206,6 +231,35 @@ def _parse_position(raw_position: dict[str, Any]) -> Position | None:
         entry_price=entry_price,
         mark_price=mark_price,
     )
+
+
+def _parse_open_order(raw_order: dict[str, Any]) -> OpenOrder | None:
+    info = raw_order.get("info") or {}
+    exchange_order_id = str(raw_order.get("id") or info.get("orderId") or "")
+    symbol = str(raw_order.get("symbol") or info.get("symbol") or "")
+    if not exchange_order_id or not symbol:
+        return None
+
+    side = _parse_order_side(raw_order.get("side") or info.get("side"))
+    amount = _first_float(raw_order, info, keys=("amount", "contracts", "qty"))
+    price_value = raw_order.get("price", info.get("price"))
+    price = float(price_value) if price_value not in (None, "") else None
+    status = str(raw_order.get("status") or info.get("orderStatus") or "open")
+    return OpenOrder(
+        exchange_order_id=exchange_order_id,
+        symbol=symbol,
+        side=side,
+        amount=amount,
+        price=price,
+        status=status,
+    )
+
+
+def _parse_order_side(value: Any) -> OrderSide | None:
+    side = str(value or "").lower()
+    if side in {"buy", "sell"}:
+        return side
+    return None
 
 
 def _first_float(

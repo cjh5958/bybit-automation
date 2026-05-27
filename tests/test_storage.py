@@ -131,6 +131,94 @@ def test_repositories_persist_records_across_reopen(tmp_path: Path) -> None:
     reopened.close()
 
 
+def test_repositories_read_reconciliation_snapshots(tmp_path: Path) -> None:
+    db_path = tmp_path / "bot.sqlite3"
+    conn = connect_sqlite(db_path, wal=False)
+    repositories = PersistenceRepositories.from_connection(conn)
+
+    repositories.positions.append_many(
+        [
+            Position(
+                symbol="MOODENG/USDT:USDT",
+                side="long",
+                size=1,
+                entry_price=100,
+                mark_price=101,
+            )
+        ]
+    )
+    repositories.positions.append_many(
+        [
+            Position(
+                symbol="MOODENG/USDT:USDT",
+                side="long",
+                size=2,
+                entry_price=100,
+                mark_price=103,
+            )
+        ]
+    )
+    repositories.orders.append_result(
+        OrderResult(
+            intent=OrderIntent(
+                action="place_limit",
+                symbol="MOODENG/USDT:USDT",
+                side="buy",
+                amount=2,
+                price=97,
+                reason="submitted order",
+            ),
+            submitted=True,
+            dry_run=False,
+            message="order submitted",
+            exchange_order_id="order-1",
+        )
+    )
+    repositories.orders.append_result(
+        OrderResult(
+            intent=OrderIntent(
+                action="place_limit",
+                symbol="1000X/USDT:USDT",
+                side="sell",
+                amount=3,
+                price=104,
+                reason="dry-run order",
+            ),
+            submitted=False,
+            dry_run=True,
+            message="dry_run: order intent recorded but not submitted",
+        )
+    )
+
+    latest_positions = repositories.positions.latest_by_symbol()
+    submitted_orders = repositories.orders.list_submitted()
+
+    assert latest_positions["MOODENG/USDT:USDT"].size == 2
+    assert latest_positions["MOODENG/USDT:USDT"].profit_pct == 3
+    assert len(submitted_orders) == 1
+    assert submitted_orders[0].exchange_order_id == "order-1"
+    assert submitted_orders[0].dry_run is False
+
+    conn.close()
+
+
+def test_trailing_state_repository_deletes_stale_state(tmp_path: Path) -> None:
+    db_path = tmp_path / "bot.sqlite3"
+    conn = connect_sqlite(db_path, wal=False)
+    repositories = PersistenceRepositories.from_connection(conn)
+    repositories.trailing_state.save_state_values(
+        symbol="MOODENG/USDT:USDT",
+        highest_profit_pct=4,
+        trailing_tier=2,
+    )
+
+    repositories.trailing_state.delete("MOODENG/USDT:USDT")
+
+    assert repositories.trailing_state.load("MOODENG/USDT:USDT") is None
+
+    conn.close()
+
+
 def test_config_version_repository_records_config_file(tmp_path: Path) -> None:
     db_path = tmp_path / "bot.sqlite3"
     config_path = tmp_path / "config.toml"
