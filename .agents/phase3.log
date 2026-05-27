@@ -1,0 +1,42 @@
+# Phase 3 Log
+
+## 2026-05-27
+
+- Started pre-Phase 3 environment standardization before coding reconciliation
+  or SAFE_MODE behavior.
+- Local verification machine inspection:
+  - OS: macOS / Darwin x86_64.
+  - Branch: `dev`.
+  - Worktree: clean before documentation changes.
+  - `uv`: not found on `PATH`.
+  - system `python3`: 3.9.6, which is below the project minimum.
+  - Homebrew: available at `/usr/local/bin/brew`.
+- Decision:
+  - The project should not rely on system Python because developer machines may
+    differ.
+  - `uv` is the required project environment manager.
+  - Runtime Python must be managed through `uv` and be Python 3.11 or newer.
+  - Verification commands must use `uv run`.
+- Documentation updated:
+  - Added a cross-platform development environment standard to
+    `.agents/AGENTS.md`.
+  - Added a fresh-checkout rebuild flow for macOS, Linux/Ubuntu, and Windows.
+  - Added an Ubuntu quick-start so a future agent can quickly recreate the
+    working environment on a new Linux machine.
+  - Added a pre-Phase 3 TODO section for environment standardization.
+- Local verification performed on this machine:
+  - Homebrew install was attempted but failed because `/usr/local/Homebrew` and
+    related Homebrew paths were not writable by the current user.
+  - Installed `uv` through the official Astral installer into
+    `/Users/chchu/.local/bin`.
+  - Added uv PATH loading for zsh shell startup files so future shell sessions
+    and non-interactive agent commands can resolve `uv`.
+  - Installed Python 3.11.15 through `uv` using project-local
+    `UV_CACHE_DIR=.uv-cache` and `UV_PYTHON_INSTALL_DIR=.uv-python`.
+  - Rebuilt `.venv` with `uv sync --locked`.
+- Verification status:
+  - `uv run python --version` passed with Python 3.11.15.
+  - `uv run pytest` passed with 39 tests.
+  - `uv run ruff check .` passed.
+  - `uv run bybit-automation` passed and stayed in `dry_run` mode.
+  - No trading runtime behavior was changed.

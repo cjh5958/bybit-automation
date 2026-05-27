@@ -756,27 +756,104 @@ direction.
 - If a command cannot be run because tooling is missing, state that clearly in
   the final response.
 
+### Development Environment Standard
+
+This project must be rebuildable on macOS, Linux, and Windows without relying on
+the system Python version.
+
+Minimum standard for development machines:
+
+- Git is available.
+- `uv` is available on `PATH`.
+- Python is managed through `uv` for this project.
+- The project runtime Python is 3.11 or newer, matching `pyproject.toml`.
+- Tests, lint, and CLI smoke checks run through `uv run`, not through global
+  `python`, `pip`, `pytest`, or `ruff` commands.
+- Local runtime artifacts such as `.venv`, `.uv-cache`, `.uv-python`, local
+  config files, and `data/` are not committed.
+
+Recommended environment rebuild flow from a fresh checkout:
+
+1. Install basic OS tools if the machine does not already have them.
+   - Ubuntu/Debian:
+     `sudo apt-get update && sudo apt-get install -y git curl ca-certificates`
+   - macOS:
+     install Xcode command line tools if `git` is unavailable, or use Homebrew.
+   - Windows:
+     install Git for Windows and use PowerShell.
+2. Install `uv` by using the official Astral installer or the machine's package
+   manager.
+   - Ubuntu/Linux:
+     `curl -LsSf https://astral.sh/uv/install.sh | sh`
+   - macOS with Homebrew:
+     `brew install uv`
+   - macOS official installer:
+     `curl -LsSf https://astral.sh/uv/install.sh | sh`
+   - Windows PowerShell:
+     `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`
+3. Restart the shell or update `PATH` according to the installer output, then
+   verify:
+   - `uv --version`
+   - `git --version`
+4. From the repository root, use project-local uv cache/runtime directories when
+   a machine has permission issues or when agents need fully disposable state:
+   - macOS/Linux:
+     `export UV_CACHE_DIR=.uv-cache`
+     `export UV_PYTHON_INSTALL_DIR=.uv-python`
+   - Windows PowerShell:
+     `$env:UV_CACHE_DIR='.uv-cache'`
+     `$env:UV_PYTHON_INSTALL_DIR='.uv-python'`
+5. Recreate the managed Python and virtual environment:
+   - `uv python install 3.11`
+   - `uv sync --locked`
+6. Verify the environment:
+   - `uv run python --version`
+   - `uv run pytest`
+   - `uv run ruff check .`
+   - `uv run bybit-automation`
+
+Ubuntu quick-start from a fresh checkout:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y git curl ca-certificates
+curl -LsSf https://astral.sh/uv/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"
+export UV_CACHE_DIR=.uv-cache
+export UV_PYTHON_INSTALL_DIR=.uv-python
+uv python install 3.11
+uv sync --locked
+uv run python --version
+uv run pytest
+uv run ruff check .
+uv run bybit-automation
+```
+
+Expected result:
+
+- `uv run python --version` reports Python 3.11 or newer.
+- Unit tests and Ruff pass without live Bybit credentials.
+- The CLI smoke test stays in `dry_run` with the template config.
+- The CLI may create or update `data/bot.sqlite3`; this is expected and
+  `data/` is ignored by git.
+
+If a development machine cannot install `uv` or Python 3.11+, stop before coding
+and record the blocker in `.agents/TODO.md` or the active phase log. Do not
+attempt to validate this project with unsupported system Python versions.
+
 ### Dependency and Tooling Rules
 
 - Use `uv` for Python dependency and environment management.
-- On this Windows workspace, prefer project-local `uv` runtime/cache locations
-  before running `uv run` commands:
-  - PowerShell:
-    `$env:UV_CACHE_DIR='.uv-cache'; $env:UV_PYTHON_INSTALL_DIR='.uv-python'`
-  - Then run commands such as:
-    `uv sync`, `uv run pytest`, `uv run ruff check .`, and
-    `uv run bybit-automation`.
-- Rationale: previous sessions saw `uv run` fail when using global paths such as
-  `C:\Users\User\AppData\Local\uv\cache` or
-  `C:\Users\User\AppData\Roaming\uv\python` because of local filesystem or
-  permission issues. Keeping cache and managed Python installs inside the
-  workspace avoids that startup friction.
+- Prefer `uv sync --locked` for reproducible dependency installation from
+  `uv.lock`.
+- Use `uv run ...` for all project commands once the environment is rebuilt.
+- Prefer project-local `uv` runtime/cache locations when a machine has global
+  cache or managed-Python permission problems.
+- Rationale: previous sessions on different machines hit global cache,
+  managed-Python, and shell `PATH` differences. Keeping cache and managed
+  Python installs inside the workspace makes setup more portable.
 - If `.venv` points to a missing Python interpreter, let `uv` recreate it after
   setting `UV_CACHE_DIR` and `UV_PYTHON_INSTALL_DIR`.
-- Since Phase 2, the CLI smoke test `uv run bybit-automation` opens the
-  configured SQLite database and writes runtime records. With the template
-  config this creates or updates `data/bot.sqlite3`; this is expected and
-  `data/` is ignored by git.
 - At the start of coding work in a new session or on a new machine, inspect the
   development environment before making assumptions. Check at least:
   - current shell and OS,

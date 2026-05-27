@@ -26,6 +26,14 @@ Rules:
 - [x] Rename package and CLI to `bybit_automation` / `bybit-automation`.
 - [x] Complete Phase 1 single-process REST-based runtime foundation.
 - [x] Complete Phase 2 SQLite persistence foundation.
+- [x] Define cross-platform minimum development environment and rebuild steps.
+
+## Pre-Phase 3: Development Environment Standardization
+
+- [x] Document the minimum supported development environment in `.agents/AGENTS.md`.
+- [x] Document a fresh-checkout environment rebuild flow using `uv`.
+- [x] Record that project commands must run through `uv run`.
+- [x] Verify the rebuilt environment on the current machine.
 
 ## Phase 0: Project Foundation with `uv`
 
