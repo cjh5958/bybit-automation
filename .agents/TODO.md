@@ -132,5 +132,5 @@ Rules:
 - [x] Add notification severity levels.
 - [x] Add retry/backoff policies.
 - [x] Add circuit breakers for repeated failures.
-- [ ] Add dry-run verification flow.
+- [x] Add dry-run verification flow.
 - [ ] Add deployment notes or helpers when runtime shape is stable.

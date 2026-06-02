@@ -65,3 +65,14 @@
   cache wrappers can adopt it without changing order idempotency behavior.
 - Verification:
   - `uv run pytest tests/test_resilience.py` passed with 9 tests.
+
+## 2026-06-02 Slice 6
+
+- Added dry-run verification flow:
+  - `bybit-automation verify-dry-run --config ...`,
+  - rejects non-`dry_run` configs before running the smoke check,
+  - reuses the existing safe runtime smoke path when config is `dry_run`.
+- This flow does not use Bybit credentials and does not open live/demo network
+  connections.
+- Verification:
+  - `uv run pytest tests/test_main.py` passed with 6 tests.

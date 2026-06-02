@@ -23,6 +23,8 @@ def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     if args.command == "reload":
         return reload_with_config(Path(args.current), Path(args.candidate))
+    if args.command == "verify-dry-run":
+        return verify_dry_run_with_config(Path(args.config))
     return run_with_config(Path(args.config))
 
 
@@ -36,6 +38,9 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     reload_parser = subparsers.add_parser("reload")
     reload_parser.add_argument("--current", default="configs/config.template.toml")
     reload_parser.add_argument("--candidate", required=True)
+
+    verify_parser = subparsers.add_parser("verify-dry-run")
+    verify_parser.add_argument("--config", default="configs/config.template.toml")
 
     parsed = parser.parse_args(argv)
     if parsed.command is None:
@@ -131,6 +136,23 @@ def reload_with_config(current_config_path: Path, candidate_config_path: Path) -
         return 0
     finally:
         conn.close()
+
+
+def verify_dry_run_with_config(config_path: Path) -> int:
+    try:
+        config = load_config(config_path, resolve_secrets=False)
+    except ConfigError as exc:
+        print(f"Config validation failed: {exc}")
+        return 1
+
+    if config.app.mode != "dry_run":
+        print(f"Dry-run verification requires app.mode=dry_run, got {config.app.mode}")
+        return 2
+
+    result = run_with_config(config_path)
+    if result == 0:
+        print("bybit-automation dry-run verification OK")
+    return result
 
 
 def _record_config_reload_signal(
