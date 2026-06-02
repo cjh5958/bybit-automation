@@ -9,6 +9,7 @@ from bybit_automation.config_reload import (
     build_reload_plan,
     validate_reload_candidate,
 )
+from bybit_automation.storage import PersistenceRepositories, connect_sqlite
 from tests.factories import valid_raw_config
 
 
@@ -194,3 +195,85 @@ def test_reload_service_keeps_active_config_when_candidate_requires_restart(
     assert result.plan.requires_restart is True
     assert result.restart_required_paths == ("exchange.account_type",)
     assert "exchange.account_type" in result.message
+
+
+def test_reload_service_records_successful_config_version_and_audit(
+    tmp_path: Path,
+) -> None:
+    current = parse_config(valid_raw_config(), resolve_secrets=False)
+    raw_candidate = valid_raw_config()
+    raw_candidate["runtime"]["risk_interval_sec"] = 2
+    candidate_path = tmp_path / "candidate.toml"
+    write_config(candidate_path, raw_candidate)
+    conn = connect_sqlite(tmp_path / "bot.sqlite3", wal=False)
+    repositories = PersistenceRepositories.from_connection(conn)
+    service = ConfigReloadService(current, repositories=repositories)
+
+    result = service.reload(candidate_path, resolve_secrets=False)
+
+    assert result.status == "applied"
+    assert result.config_version_id == 1
+    assert conn.execute("SELECT COUNT(*) FROM config_versions").fetchone()[0] == 1
+    assert repositories.bot_state.get_json("last_config_reload") == {
+        "change_count": 1,
+        "config_version_id": 1,
+        "hot_reloadable_change_count": 1,
+        "message": "candidate config applied",
+        "restart_required_paths": [],
+        "status": "applied",
+        "valid": True,
+    }
+    conn.close()
+
+
+def test_reload_service_audits_invalid_without_recording_config_version(
+    tmp_path: Path,
+) -> None:
+    current = parse_config(valid_raw_config(), resolve_secrets=False)
+    candidate_path = tmp_path / "invalid.toml"
+    candidate_path.write_text("[app]\nmode = \"dry_run\"\n", encoding="utf-8")
+    conn = connect_sqlite(tmp_path / "bot.sqlite3", wal=False)
+    repositories = PersistenceRepositories.from_connection(conn)
+    service = ConfigReloadService(current, repositories=repositories)
+
+    result = service.reload(candidate_path, resolve_secrets=False)
+
+    assert result.status == "invalid"
+    assert conn.execute("SELECT COUNT(*) FROM config_versions").fetchone()[0] == 0
+    audit = repositories.bot_state.get_json("last_config_reload")
+    assert audit is not None
+    assert audit["status"] == "invalid"
+    assert audit["valid"] is False
+    assert audit["config_version_id"] is None
+    conn.close()
+
+
+def test_reload_service_audits_restart_required_without_recording_config_version(
+    tmp_path: Path,
+) -> None:
+    current = parse_config(valid_raw_config(), resolve_secrets=False)
+    raw_candidate = valid_raw_config()
+    raw_candidate["exchange"]["account_type"] = "spot"
+    candidate_path = tmp_path / "candidate.toml"
+    write_config(candidate_path, raw_candidate)
+    conn = connect_sqlite(tmp_path / "bot.sqlite3", wal=False)
+    repositories = PersistenceRepositories.from_connection(conn)
+    service = ConfigReloadService(current, repositories=repositories)
+
+    result = service.reload(candidate_path, resolve_secrets=False)
+
+    assert result.status == "requires_restart"
+    assert conn.execute("SELECT COUNT(*) FROM config_versions").fetchone()[0] == 0
+    assert repositories.bot_state.get_json("last_config_reload") == {
+        "change_count": 1,
+        "config_version_id": None,
+        "hot_reloadable_change_count": 0,
+        "message": (
+            "candidate config contains changes that require a safe restart: "
+            "exchange.account_type"
+        ),
+        "restart_required_paths": ["exchange.account_type"],
+        "status": "requires_restart",
+        "valid": True,
+    }
+    conn.close()

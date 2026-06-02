@@ -119,10 +119,10 @@ Rules:
 
 - [x] Add config schema validation.
 - [ ] Add manual reload entry point.
-- [ ] Store successful config versions in SQLite.
+- [x] Store successful config versions in SQLite.
 - [x] Reject invalid config without changing runtime config.
 - [x] Reject or require safe restart for unsafe config changes.
-- [ ] Add tests for valid, invalid, and unsafe reloads.
+- [x] Add tests for valid, invalid, and unsafe reloads.
 
 ## Phase 7: Operational Stability
 

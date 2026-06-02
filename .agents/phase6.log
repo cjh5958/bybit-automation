@@ -28,6 +28,21 @@
 - Verification:
   - `uv run pytest tests/test_config_reload.py` passed with 6 tests.
 
+## 2026-06-02 Slice 4
+
+- Added SQLite reload audit integration:
+  - successful manual reload records a config version with
+    `reload_reason="manual"`,
+  - all reload attempts write `bot_state.last_config_reload`,
+  - invalid and restart-required reload attempts are audited but do not create
+    successful config version records,
+  - audit payload includes status, message, change counts, restart-required
+    paths, and config version id when applicable.
+- Tests now cover applied, invalid, and restart-required reload attempts.
+- Verification:
+  - `uv run pytest tests/test_config_reload.py tests/test_storage.py` passed
+    with 16 tests.
+
 ## 2026-06-02 Slice 3
 
 - Strengthened unsafe reload reporting:

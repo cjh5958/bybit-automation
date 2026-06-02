@@ -6,6 +6,7 @@ import re
 from typing import Any, Callable, Literal
 
 from bybit_automation.config import BotConfig, ConfigError, load_config
+from bybit_automation.storage import PersistenceRepositories
 
 
 ChangeSafety = Literal["hot_reloadable", "requires_restart"]
@@ -50,6 +51,7 @@ class ConfigReloadResult:
     active_config: BotConfig
     plan: ConfigReloadPlan
     message: str
+    config_version_id: int | None = None
 
     @property
     def restart_required_paths(self) -> tuple[str, ...]:
@@ -62,9 +64,11 @@ class ConfigReloadService:
         active_config: BotConfig,
         *,
         apply_config: Callable[[BotConfig], None] | None = None,
+        repositories: PersistenceRepositories | None = None,
     ) -> None:
         self._active_config = active_config
         self._apply_config = apply_config
+        self._repositories = repositories
 
     @property
     def active_config(self) -> BotConfig:
@@ -82,16 +86,18 @@ class ConfigReloadService:
             resolve_secrets=resolve_secrets,
         )
         if not plan.valid:
-            return ConfigReloadResult(
+            result = ConfigReloadResult(
                 status="invalid",
                 active_config=self._active_config,
                 plan=plan,
                 message=plan.error or "candidate config is invalid",
             )
+            self._audit_reload_result(result)
+            return result
 
         if plan.requires_restart:
             paths = ", ".join(plan.unsafe_change_paths)
-            return ConfigReloadResult(
+            result = ConfigReloadResult(
                 status="requires_restart",
                 active_config=self._active_config,
                 plan=plan,
@@ -100,27 +106,60 @@ class ConfigReloadService:
                     f": {paths}"
                 ),
             )
+            self._audit_reload_result(result)
+            return result
 
         if plan.candidate is None:
             raise RuntimeError("valid reload plan did not include candidate config")
 
         if not plan.changes:
-            return ConfigReloadResult(
+            result = ConfigReloadResult(
                 status="unchanged",
                 active_config=self._active_config,
                 plan=plan,
                 message="candidate config has no changes",
             )
+            self._audit_reload_result(result)
+            return result
 
         self._active_config = plan.candidate
         if self._apply_config is not None:
             self._apply_config(plan.candidate)
 
-        return ConfigReloadResult(
+        config_version_id = self._record_successful_config_version(candidate_path)
+        result = ConfigReloadResult(
             status="applied",
             active_config=self._active_config,
             plan=plan,
             message="candidate config applied",
+            config_version_id=config_version_id,
+        )
+        self._audit_reload_result(result)
+        return result
+
+    def _record_successful_config_version(self, candidate_path: str | Path) -> int | None:
+        if self._repositories is None:
+            return None
+        return self._repositories.config_versions.record_file(
+            candidate_path,
+            applied_by="manual_reload",
+            reload_reason="manual",
+        )
+
+    def _audit_reload_result(self, result: ConfigReloadResult) -> None:
+        if self._repositories is None:
+            return
+        self._repositories.bot_state.set_json(
+            "last_config_reload",
+            {
+                "status": result.status,
+                "message": result.message,
+                "valid": result.plan.valid,
+                "change_count": len(result.plan.changes),
+                "hot_reloadable_change_count": len(result.plan.hot_reloadable_changes),
+                "restart_required_paths": list(result.restart_required_paths),
+                "config_version_id": result.config_version_id,
+            },
         )
 
 
