@@ -1,0 +1,16 @@
+# Phase 7 Log
+
+## 2026-06-02
+
+- Started Phase 7 on branch `dev` with a clean worktree.
+- Local environment notes:
+  - Used project-local `UV_CACHE_DIR=.uv-cache` and
+    `UV_PYTHON_INSTALL_DIR=.uv-python`.
+  - `uv run python --version` passed with Python 3.14.3.
+- Slice 1 completed:
+  - added `OperationalEvent`,
+  - added typed operational severity and component categories,
+  - added stable JSON payload serialization,
+  - added `log_operational_event()` helper that maps severity to logging level.
+- Verification:
+  - `uv run pytest tests/test_operations.py` passed with 2 tests.

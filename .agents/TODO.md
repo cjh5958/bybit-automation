@@ -127,7 +127,7 @@ Rules:
 
 ## Phase 7: Operational Stability
 
-- [ ] Add structured logs or clearly typed log events.
+- [x] Add structured logs or clearly typed log events.
 - [ ] Add health checks.
 - [ ] Add notification severity levels.
 - [ ] Add retry/backoff policies.
