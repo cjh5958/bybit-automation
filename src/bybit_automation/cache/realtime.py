@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 import json
 import logging
 import os
-from typing import Any, Callable, Protocol
+from typing import TYPE_CHECKING, Any, Callable, Protocol
 from uuid import uuid4
 
 import redis
@@ -14,6 +14,9 @@ from redis.exceptions import RedisError
 from bybit_automation.config import RedisConfig
 from bybit_automation.exchange_client import MarketSnapshot, OpenOrder
 from bybit_automation.positions import Position
+
+if TYPE_CHECKING:
+    from bybit_automation.ws.events import ExecutionStreamEvent
 
 LOGGER = logging.getLogger(__name__)
 
@@ -78,6 +81,12 @@ class RealtimeCache(Protocol):
     def get_open_orders(self) -> list[OpenOrder] | None:
         raise NotImplementedError
 
+    def set_recent_executions(self, executions: list[ExecutionStreamEvent]) -> None:
+        raise NotImplementedError
+
+    def get_recent_executions(self) -> list[ExecutionStreamEvent] | None:
+        raise NotImplementedError
+
     def acquire_symbol_lock(
         self,
         symbol: str,
@@ -114,6 +123,12 @@ class NoopRealtimeCache:
         return None
 
     def get_open_orders(self) -> list[OpenOrder] | None:
+        return None
+
+    def set_recent_executions(self, executions: list[ExecutionStreamEvent]) -> None:
+        return None
+
+    def get_recent_executions(self) -> list[ExecutionStreamEvent] | None:
         return None
 
     def acquire_symbol_lock(
@@ -203,6 +218,23 @@ class RedisRealtimeCache:
             return [_open_order_from_payload(item) for item in payload]
         except (KeyError, TypeError, ValueError) as exc:
             LOGGER.warning("invalid cached open orders: %s", exc)
+            return None
+
+    def set_recent_executions(self, executions: list[ExecutionStreamEvent]) -> None:
+        self._safe_set(
+            self._key("executions"),
+            [_execution_payload(execution) for execution in executions],
+            ttl_sec=self._account_ttl_sec,
+        )
+
+    def get_recent_executions(self) -> list[ExecutionStreamEvent] | None:
+        payload = self._safe_get(self._key("executions"))
+        if payload is None:
+            return None
+        try:
+            return [_execution_from_payload(item) for item in payload]
+        except (KeyError, TypeError, ValueError) as exc:
+            LOGGER.warning("invalid cached executions: %s", exc)
             return None
 
     def acquire_symbol_lock(
@@ -376,4 +408,33 @@ def _open_order_from_payload(payload: dict[str, Any]) -> OpenOrder:
         amount=float(payload["amount"]),
         price=float(payload["price"]) if payload.get("price") is not None else None,
         status=str(payload["status"]),
+    )
+
+
+def _execution_payload(execution: ExecutionStreamEvent) -> dict[str, Any]:
+    return {
+        "execution_id": execution.execution_id,
+        "order_id": execution.order_id,
+        "symbol": execution.symbol,
+        "event_time": execution.event_time,
+        "side": execution.side,
+        "amount": execution.amount,
+        "price": execution.price,
+    }
+
+
+def _execution_from_payload(payload: dict[str, Any]) -> ExecutionStreamEvent:
+    from bybit_automation.ws.events import ExecutionStreamEvent
+
+    side = payload.get("side")
+    if side not in {"buy", "sell", None}:
+        side = None
+    return ExecutionStreamEvent(
+        execution_id=str(payload["execution_id"]),
+        order_id=str(payload["order_id"]),
+        symbol=str(payload["symbol"]),
+        event_time=float(payload["event_time"]),
+        side=side,
+        amount=float(payload["amount"]),
+        price=float(payload["price"]),
     )

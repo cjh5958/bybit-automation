@@ -12,6 +12,7 @@ from bybit_automation.cache import (
 from bybit_automation.config import RedisConfig
 from bybit_automation.exchange_client import MarketSnapshot, OpenOrder, TradingRules
 from bybit_automation.positions import Position
+from bybit_automation.ws import ExecutionStreamEvent
 
 
 class FakeRedis:
@@ -137,15 +138,28 @@ def test_redis_cache_round_trips_market_positions_orders_and_reload_signal() -> 
             status="open",
         )
     ]
+    executions = [
+        ExecutionStreamEvent(
+            execution_id="exec-1",
+            order_id="order-1",
+            symbol="MOODENG/USDT:USDT",
+            event_time=100,
+            side="buy",
+            amount=1,
+            price=97,
+        )
+    ]
 
     cache.set_market_snapshot(snapshot)
     cache.set_positions(positions)
     cache.set_open_orders(orders)
+    cache.set_recent_executions(executions)
     cache.publish_config_reload_signal(reason="manual", requested_by="operator")
 
     assert cache.get_market_snapshot("MOODENG/USDT:USDT") == snapshot
     assert cache.get_positions() == positions
     assert cache.get_open_orders() == orders
+    assert cache.get_recent_executions() == executions
     signal = cache.get_config_reload_signal()
     assert signal is not None
     assert signal.reason == "manual"
@@ -183,6 +197,7 @@ def test_redis_operation_errors_degrade_to_cache_misses() -> None:
 
     assert cache.get_market_snapshot("MOODENG/USDT:USDT") is None
     assert cache.acquire_symbol_lock("MOODENG/USDT:USDT", owner="test", ttl_sec=1) is None
+    assert cache.get_recent_executions() is None
 
 
 def test_cache_factory_uses_noop_when_disabled_or_missing_url(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -12,10 +12,12 @@ from bybit_automation.ws.events import (
     WebSocketStream,
 )
 from bybit_automation.ws.ingestion import MarketStreamIngestor
+from bybit_automation.ws.ingestion import AccountStreamIngestor
 from bybit_automation.ws.supervisor import ReconnectPolicy, StreamSupervisor
 
 __all__ = [
     "AccountStreamEvent",
+    "AccountStreamIngestor",
     "ExecutionStreamEvent",
     "HeartbeatStreamEvent",
     "MarketStreamEvent",

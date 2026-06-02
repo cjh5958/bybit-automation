@@ -67,3 +67,20 @@
 - Verification:
   - `uv run pytest tests/test_ws_events.py tests/test_ws_ingestion.py
     tests/test_ws_supervisor.py` passed with 9 tests.
+
+## 2026-06-02 Slice 5
+
+- Added private account stream ingestion:
+  - added `AccountStreamIngestor`,
+  - updates active positions cache from position stream events,
+  - updates open-order cache from order stream events,
+  - removes filled/canceled/closed/rejected orders from the open-order cache,
+  - removes zero-size positions from the active-position cache,
+  - records recent execution stream events in Redis cache with bounded in-memory
+    trimming before each cache write.
+- Extended `RealtimeCache` with recent execution cache operations.
+- Kept private stream ingestion cache-only; it does not place, cancel, close, or
+  resume trading without REST reconciliation.
+- Verification:
+  - `uv run pytest tests/test_cache.py tests/test_ws_ingestion.py
+    tests/test_ws_events.py` passed with 15 tests.
