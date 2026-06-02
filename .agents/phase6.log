@@ -1,0 +1,16 @@
+# Phase 6 Log
+
+## 2026-06-02
+
+- Started Phase 6 after committing the pending `AGENTS.md` environment
+  inspection update as `b9e877a`.
+- Slice 1 completed:
+  - added reload candidate validation without mutating runtime state,
+  - added config diff generation from resolved typed config objects,
+  - classifies changes as `hot_reloadable` or `requires_restart`,
+  - treats strategy/risk/runtime interval/symbol/blacklist/notification enabled
+    changes as hot-reloadable,
+  - treats exchange, mode, database, Redis, WebSocket, credential env names, and
+    other unlisted fields as restart-required by default.
+- Verification:
+  - `uv run pytest tests/test_config_reload.py` passed with 3 tests.

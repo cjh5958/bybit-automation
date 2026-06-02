@@ -117,7 +117,7 @@ Rules:
 
 ## Phase 6: Config Hot Reload
 
-- [ ] Add config schema validation.
+- [x] Add config schema validation.
 - [ ] Add manual reload entry point.
 - [ ] Store successful config versions in SQLite.
 - [ ] Reject invalid config without changing runtime config.
