@@ -14,3 +14,16 @@
     other unlisted fields as restart-required by default.
 - Verification:
   - `uv run pytest tests/test_config_reload.py` passed with 3 tests.
+
+## 2026-06-02 Slice 2
+
+- Added manual reload service foundation:
+  - `ConfigReloadService` keeps an active config reference,
+  - validates a candidate before applying,
+  - applies only valid candidates with no restart-required changes,
+  - supports an optional apply callback for future runtime integration,
+  - preserves active config when candidate config is invalid.
+- The service also returns `requires_restart` for unsafe candidates; a follow-up
+  slice will make restart-required reporting easier for CLI/admin callers.
+- Verification:
+  - `uv run pytest tests/test_config_reload.py` passed with 6 tests.

@@ -3,12 +3,13 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from pathlib import Path
 import re
-from typing import Any, Literal
+from typing import Any, Callable, Literal
 
 from bybit_automation.config import BotConfig, ConfigError, load_config
 
 
 ChangeSafety = Literal["hot_reloadable", "requires_restart"]
+ReloadStatus = Literal["applied", "invalid", "requires_restart", "unchanged"]
 
 
 @dataclass(frozen=True)
@@ -37,6 +38,78 @@ class ConfigReloadPlan:
     @property
     def requires_restart(self) -> bool:
         return bool(self.unsafe_changes)
+
+
+@dataclass(frozen=True)
+class ConfigReloadResult:
+    status: ReloadStatus
+    active_config: BotConfig
+    plan: ConfigReloadPlan
+    message: str
+
+
+class ConfigReloadService:
+    def __init__(
+        self,
+        active_config: BotConfig,
+        *,
+        apply_config: Callable[[BotConfig], None] | None = None,
+    ) -> None:
+        self._active_config = active_config
+        self._apply_config = apply_config
+
+    @property
+    def active_config(self) -> BotConfig:
+        return self._active_config
+
+    def reload(
+        self,
+        candidate_path: str | Path,
+        *,
+        resolve_secrets: bool = True,
+    ) -> ConfigReloadResult:
+        plan = validate_reload_candidate(
+            self._active_config,
+            candidate_path,
+            resolve_secrets=resolve_secrets,
+        )
+        if not plan.valid:
+            return ConfigReloadResult(
+                status="invalid",
+                active_config=self._active_config,
+                plan=plan,
+                message=plan.error or "candidate config is invalid",
+            )
+
+        if plan.requires_restart:
+            return ConfigReloadResult(
+                status="requires_restart",
+                active_config=self._active_config,
+                plan=plan,
+                message="candidate config contains changes that require a safe restart",
+            )
+
+        if plan.candidate is None:
+            raise RuntimeError("valid reload plan did not include candidate config")
+
+        if not plan.changes:
+            return ConfigReloadResult(
+                status="unchanged",
+                active_config=self._active_config,
+                plan=plan,
+                message="candidate config has no changes",
+            )
+
+        self._active_config = plan.candidate
+        if self._apply_config is not None:
+            self._apply_config(plan.candidate)
+
+        return ConfigReloadResult(
+            status="applied",
+            active_config=self._active_config,
+            plan=plan,
+            message="candidate config applied",
+        )
 
 
 SAFE_PATHS = {

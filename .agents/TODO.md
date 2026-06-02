@@ -120,7 +120,7 @@ Rules:
 - [x] Add config schema validation.
 - [ ] Add manual reload entry point.
 - [ ] Store successful config versions in SQLite.
-- [ ] Reject invalid config without changing runtime config.
+- [x] Reject invalid config without changing runtime config.
 - [ ] Reject or require safe restart for unsafe config changes.
 - [ ] Add tests for valid, invalid, and unsafe reloads.
 
