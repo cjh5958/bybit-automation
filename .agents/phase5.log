@@ -21,3 +21,19 @@
   - kept the slice purely offline with no Bybit WebSocket connection.
 - Verification:
   - `uv run pytest tests/test_ws_events.py` passed with 2 tests.
+
+## 2026-06-02 Slice 2
+
+- Added public market stream ingestion:
+  - added `MarketStreamIngestor`,
+  - converts valid `MarketStreamEvent` messages into `MarketSnapshot`,
+  - writes market snapshots through the existing `RealtimeCache` abstraction,
+  - derives close prices from OHLCV when the event does not provide explicit
+    close prices,
+  - ignores invalid market events and non-market account events.
+- Extended `MarketStreamEvent` with optional ATR and average-amplitude
+  percentages so stream ingestion can preserve volatility metadata when an
+  upstream adapter provides it.
+- Verification:
+  - `uv run pytest tests/test_ws_events.py tests/test_ws_ingestion.py` passed
+    with 5 tests.

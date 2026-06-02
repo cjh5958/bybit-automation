@@ -38,6 +38,8 @@ class MarketStreamEvent:
     mark_price: float | None = None
     close_prices: tuple[float, ...] = ()
     ohlcv: tuple[tuple[float, ...], ...] = ()
+    atr_pct: float = 0.0
+    average_amplitude_pct: float = 0.0
 
 
 @dataclass(frozen=True)

@@ -10,6 +10,7 @@ from bybit_automation.ws.events import (
     StreamStatus,
     WebSocketStream,
 )
+from bybit_automation.ws.ingestion import MarketStreamIngestor
 
 __all__ = [
     "AccountStreamEvent",
@@ -22,4 +23,5 @@ __all__ = [
     "StreamHealth",
     "StreamStatus",
     "WebSocketStream",
+    "MarketStreamIngestor",
 ]
