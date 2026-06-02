@@ -106,6 +106,7 @@ Rules:
 
 ## Phase 5: WebSocket Synchronization
 
+- [x] Add WebSocket stream event types and stream abstraction.
 - [ ] Add public market WebSocket ingestion.
 - [ ] Add private order/position/execution WebSocket ingestion.
 - [ ] Add heartbeat monitoring.

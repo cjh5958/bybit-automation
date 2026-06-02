@@ -1,0 +1,23 @@
+# Phase 5 Log
+
+## 2026-06-02
+
+- Started Phase 5 on branch `dev` with a clean worktree.
+- Local environment notes:
+  - `uv` is available on `PATH` as `uv 0.11.3`.
+  - Default uv cache initialization failed at
+    `C:\Users\User\AppData\Local\uv\cache` because a file already existed at
+    the cache path.
+  - Used project-local `UV_CACHE_DIR=.uv-cache` and
+    `UV_PYTHON_INSTALL_DIR=.uv-python`, matching the documented portable
+    environment guidance.
+  - `uv run python --version` passed with Python 3.14.3.
+- Slice 1 completed:
+  - added `bybit_automation.ws` package,
+  - added stream event dataclasses for market, order, position, and execution
+    updates,
+  - added stream health/freshness semantics,
+  - added stream protocol and event-handler protocol,
+  - kept the slice purely offline with no Bybit WebSocket connection.
+- Verification:
+  - `uv run pytest tests/test_ws_events.py` passed with 2 tests.
