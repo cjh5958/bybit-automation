@@ -230,7 +230,7 @@ Invalid config must not partially apply.
 
 ### Hot Reload Rules
 
-The first implementation should support manual reload only.
+The first implementation supports manual reload only.
 
 Safe hot-reloadable fields:
 
@@ -252,8 +252,27 @@ Fields that should not be silently hot-reloaded:
 - Redis URL,
 - default leverage.
 
-If a reload contains unsafe changes, the loader should reject it or require an
-explicit safe-restart flow.
+If a reload contains unsafe changes, the reload service returns
+`requires_restart`, preserves the active config, records an audit result when
+SQLite is available, and requires an explicit safe-restart flow.
+
+Manual reload entry point:
+
+```text
+bybit-automation reload --current configs/config.toml --candidate configs/config.new.toml
+```
+
+Expected behavior:
+
+- valid and hot-reloadable candidates apply through the reload service,
+- invalid candidates return non-zero and preserve the active config,
+- unsafe candidates return non-zero with restart-required paths,
+- successful manual reloads are recorded in SQLite `config_versions` with
+  `reload_reason = "manual"`,
+- all reload attempts write `bot_state.last_config_reload` when SQLite is
+  available,
+- Redis config reload signals are recorded as notification primitives only and
+  do not automatically apply config changes.
 
 ### Persistence of Loaded Config
 

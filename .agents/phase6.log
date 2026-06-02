@@ -59,6 +59,24 @@
   - `uv run pytest tests/test_main.py tests/test_config_reload.py` passed with
     13 tests.
 
+## 2026-06-02 Slice 6 and Final Verification
+
+- Updated project documentation:
+  - marked Phase 6 complete in `.agents/TODO.md`,
+  - documented manual reload behavior and SQLite audit semantics in
+    `.agents/SPEC.md`,
+  - updated `.agents/AGENTS.md` to point future work at Phase 7 operational
+    stability and read-only Bybit demo preflight planning.
+- Final Phase 6 verification:
+  - `uv run pytest` passed with 89 tests.
+  - `uv run ruff check .` passed.
+  - `uv run bybit-automation` passed and stayed in `dry_run` mode.
+  - `uv run bybit-automation reload --current configs/config.template.toml
+    --candidate configs/config.template.toml` passed with unchanged reload
+    status.
+- No live Bybit credentials were used.
+- No live/demo network connection was opened.
+
 ## 2026-06-02 Slice 3
 
 - Strengthened unsafe reload reporting:

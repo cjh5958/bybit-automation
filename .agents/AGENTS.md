@@ -1018,15 +1018,17 @@ strictly needed to prove persistence; those belong to Phase 3.
 
 ## Immediate Next Recommended Step
 
-Start Phase 6:
+Start Phase 7:
 
-1. Add config schema validation entry points that can validate a full reload
-   candidate without mutating runtime state.
-2. Add a manual reload command or service method.
-3. Store successful config versions in SQLite with reload reason metadata.
-4. Reject invalid config without changing the active runtime config.
-5. Reject unsafe hot changes or require an explicit safe restart.
-6. Keep Redis config reload signals as notification primitives only until the
-   manual reload path is safe and tested.
-7. Keep runtime behavior in `dry_run` unless the user explicitly approves demo
+1. Add structured logs or clearly typed log events for runtime, reload,
+   reconciliation, cache, and exchange operations.
+2. Add health checks that report SQLite, Redis, WebSocket, and exchange
+   readiness separately.
+3. Add notification severity levels for info/warning/safe-mode/error events.
+4. Add retry/backoff policies and circuit breakers for repeated external
+   failures.
+5. Add a dry-run/demo verification flow. Begin with Bybit demo read-only
+   connectivity preflight after the user explicitly provides demo credentials
+   and approves network verification.
+6. Keep runtime behavior in `dry_run` unless the user explicitly approves demo
    or live exchange checks.
