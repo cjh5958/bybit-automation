@@ -121,7 +121,7 @@ Rules:
 - [ ] Add manual reload entry point.
 - [ ] Store successful config versions in SQLite.
 - [x] Reject invalid config without changing runtime config.
-- [ ] Reject or require safe restart for unsafe config changes.
+- [x] Reject or require safe restart for unsafe config changes.
 - [ ] Add tests for valid, invalid, and unsafe reloads.
 
 ## Phase 7: Operational Stability

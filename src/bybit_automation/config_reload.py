@@ -36,6 +36,10 @@ class ConfigReloadPlan:
         return tuple(change for change in self.changes if change.safety == "requires_restart")
 
     @property
+    def unsafe_change_paths(self) -> tuple[str, ...]:
+        return tuple(change.path for change in self.unsafe_changes)
+
+    @property
     def requires_restart(self) -> bool:
         return bool(self.unsafe_changes)
 
@@ -46,6 +50,10 @@ class ConfigReloadResult:
     active_config: BotConfig
     plan: ConfigReloadPlan
     message: str
+
+    @property
+    def restart_required_paths(self) -> tuple[str, ...]:
+        return self.plan.unsafe_change_paths
 
 
 class ConfigReloadService:
@@ -82,11 +90,15 @@ class ConfigReloadService:
             )
 
         if plan.requires_restart:
+            paths = ", ".join(plan.unsafe_change_paths)
             return ConfigReloadResult(
                 status="requires_restart",
                 active_config=self._active_config,
                 plan=plan,
-                message="candidate config contains changes that require a safe restart",
+                message=(
+                    "candidate config contains changes that require a safe restart"
+                    f": {paths}"
+                ),
             )
 
         if plan.candidate is None:

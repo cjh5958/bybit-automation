@@ -192,3 +192,5 @@ def test_reload_service_keeps_active_config_when_candidate_requires_restart(
     assert result.active_config is current
     assert service.active_config is current
     assert result.plan.requires_restart is True
+    assert result.restart_required_paths == ("exchange.account_type",)
+    assert "exchange.account_type" in result.message
