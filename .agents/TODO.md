@@ -109,8 +109,8 @@ Rules:
 - [x] Add WebSocket stream event types and stream abstraction.
 - [x] Add public market WebSocket ingestion.
 - [ ] Add private order/position/execution WebSocket ingestion.
-- [ ] Add heartbeat monitoring.
-- [ ] Add reconnect with backoff.
+- [x] Add heartbeat monitoring.
+- [x] Add reconnect with backoff.
 - [x] Add stale-data detection.
 - [ ] Keep REST reconciliation as authoritative correction path.
 

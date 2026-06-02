@@ -53,3 +53,17 @@
 - Verification:
   - `uv run pytest tests/test_runtime.py tests/test_runtime_persistence.py
     tests/test_ws_events.py tests/test_ws_ingestion.py` passed with 17 tests.
+
+## 2026-06-02 Slice 4
+
+- Added WebSocket stream supervision:
+  - added `HeartbeatStreamEvent`,
+  - added `ReconnectPolicy` with capped exponential delay,
+  - added `StreamSupervisor` that updates stream health on messages and
+    heartbeat events,
+  - marks healthy streams as stale when no recent messages arrive,
+  - reconnects with backoff after stream failures,
+  - exposes stop behavior without placing/canceling/closing orders.
+- Verification:
+  - `uv run pytest tests/test_ws_events.py tests/test_ws_ingestion.py
+    tests/test_ws_supervisor.py` passed with 9 tests.

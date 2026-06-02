@@ -1,6 +1,7 @@
 from bybit_automation.ws.events import (
     AccountStreamEvent,
     ExecutionStreamEvent,
+    HeartbeatStreamEvent,
     MarketStreamEvent,
     OrderStreamEvent,
     PositionStreamEvent,
@@ -11,10 +12,12 @@ from bybit_automation.ws.events import (
     WebSocketStream,
 )
 from bybit_automation.ws.ingestion import MarketStreamIngestor
+from bybit_automation.ws.supervisor import ReconnectPolicy, StreamSupervisor
 
 __all__ = [
     "AccountStreamEvent",
     "ExecutionStreamEvent",
+    "HeartbeatStreamEvent",
     "MarketStreamEvent",
     "OrderStreamEvent",
     "PositionStreamEvent",
@@ -24,4 +27,6 @@ __all__ = [
     "StreamStatus",
     "WebSocketStream",
     "MarketStreamIngestor",
+    "ReconnectPolicy",
+    "StreamSupervisor",
 ]

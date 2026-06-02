@@ -43,6 +43,11 @@ class MarketStreamEvent:
 
 
 @dataclass(frozen=True)
+class HeartbeatStreamEvent:
+    event_time: float
+
+
+@dataclass(frozen=True)
 class OrderStreamEvent:
     exchange_order_id: str
     symbol: str
@@ -75,7 +80,7 @@ class ExecutionStreamEvent:
 
 
 AccountStreamEvent: TypeAlias = OrderStreamEvent | PositionStreamEvent | ExecutionStreamEvent
-StreamEvent: TypeAlias = MarketStreamEvent | AccountStreamEvent
+StreamEvent: TypeAlias = MarketStreamEvent | HeartbeatStreamEvent | AccountStreamEvent
 
 
 class StreamEventHandler(Protocol):
