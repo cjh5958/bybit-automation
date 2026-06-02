@@ -111,7 +111,7 @@ Rules:
 - [ ] Add private order/position/execution WebSocket ingestion.
 - [ ] Add heartbeat monitoring.
 - [ ] Add reconnect with backoff.
-- [ ] Add stale-data detection.
+- [x] Add stale-data detection.
 - [ ] Keep REST reconciliation as authoritative correction path.
 
 ## Phase 6: Config Hot Reload

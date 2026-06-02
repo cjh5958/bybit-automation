@@ -5,6 +5,7 @@ from bybit_automation.config import parse_config
 from bybit_automation.exchange_client import MarketSnapshot, TradingRules
 from bybit_automation.positions import Position
 from bybit_automation.state import RuntimeState
+from bybit_automation.ws import StreamHealth
 from tests.factories import valid_raw_config
 
 
@@ -144,3 +145,41 @@ def test_runtime_executes_strategy_entry_order_intents_in_dry_run() -> None:
     assert report.order_results[1].intent.price == 97.0
     assert report.order_results[1].intent.amount > 0
     assert state.get_symbol("MOODENG/USDT:USDT").status == "ENTRY_ORDER_PLACED"
+
+
+def test_runtime_pauses_strategy_when_market_stream_is_stale() -> None:
+    raw = valid_raw_config()
+    raw["symbols"] = [{"symbol": "MOODENG/USDT:USDT", "enabled": True}]
+    config = parse_config(raw, resolve_secrets=False)
+    exchange = FakeExchange(
+        snapshots={
+            "MOODENG/USDT:USDT": MarketSnapshot(
+                symbol="MOODENG/USDT:USDT",
+                mark_price=100,
+                close_prices=(98, 99, 101),
+                atr_pct=1,
+                average_amplitude_pct=1,
+            )
+        }
+    )
+    runtime = BotRuntime(
+        config,
+        exchange=exchange,
+        market_stream_health=StreamHealth(
+            status="healthy",
+            last_message_at=100,
+            stale_after_sec=5,
+            reason="market_data_stale",
+        ),
+        monotonic=lambda: 106,
+    )
+
+    report = runtime.run_once()
+
+    assert report.ran_risk is True
+    assert report.ran_strategy is False
+    assert report.market_data_fresh is False
+    assert report.strategy_pause_reason == "market_data_stale"
+    assert report.strategy_decisions == ()
+    assert report.order_results == ()
+    assert exchange.requested_snapshots == []

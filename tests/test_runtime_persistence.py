@@ -72,11 +72,13 @@ def test_runtime_persists_strategy_orders_and_bot_state(tmp_path: Path) -> None:
     assert conn.execute("SELECT COUNT(*) FROM orders").fetchone()[0] == 2
     assert conn.execute("SELECT COUNT(*) FROM order_events").fetchone()[0] == 2
     assert repositories.bot_state.get_json("last_tick") == {
+        "market_data_fresh": True,
         "positions_seen": 0,
         "ran_risk": True,
         "ran_strategy": True,
         "safe_mode": False,
         "safe_mode_reason": None,
+        "strategy_pause_reason": None,
     }
 
     conn.close()
@@ -201,11 +203,13 @@ def test_startup_reconciliation_enters_safe_mode_for_unknown_open_order(
     assert report.strategy_decisions == ()
     assert report.order_results == ()
     assert repositories.bot_state.get_json("last_tick") == {
+        "market_data_fresh": True,
         "positions_seen": 0,
         "ran_risk": True,
         "ran_strategy": False,
         "safe_mode": True,
         "safe_mode_reason": "unknown_exchange_open_order",
+        "strategy_pause_reason": "safe_mode",
     }
 
     conn.close()

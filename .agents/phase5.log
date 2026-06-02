@@ -37,3 +37,19 @@
 - Verification:
   - `uv run pytest tests/test_ws_events.py tests/test_ws_ingestion.py` passed
     with 5 tests.
+
+## 2026-06-02 Slice 3
+
+- Added stale market-data guard to `BotRuntime`:
+  - accepts optional `StreamHealth`,
+  - treats missing stream health as fresh so existing REST-only dry-run behavior
+    remains unchanged,
+  - pauses strategy/new-entry evaluation when configured stream health is stale,
+  - keeps risk evaluation running while market data is stale,
+  - records `market_data_fresh` and `strategy_pause_reason` in runtime reports
+    and SQLite `bot_state.last_tick`.
+- Existing startup `SAFE_MODE` behavior now records `strategy_pause_reason` as
+  `safe_mode`.
+- Verification:
+  - `uv run pytest tests/test_runtime.py tests/test_runtime_persistence.py
+    tests/test_ws_events.py tests/test_ws_ingestion.py` passed with 17 tests.

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+import time
+from typing import Callable, Literal
 
 from bybit_automation.calculations import convert_usdt_to_contract_amount, round_price_to_tick
 from bybit_automation.config import BotConfig
@@ -19,6 +20,7 @@ from bybit_automation.risk import RiskDecision, RiskManager
 from bybit_automation.state import RuntimeState
 from bybit_automation.storage import PersistenceRepositories
 from bybit_automation.strategy import StrategyDecision, StrategyEngine
+from bybit_automation.ws import StreamHealth
 
 
 @dataclass(frozen=True)
@@ -31,6 +33,8 @@ class RuntimeReport:
     safe_mode_reason: str | None
     ran_risk: bool
     ran_strategy: bool
+    market_data_fresh: bool
+    strategy_pause_reason: str | None
 
 
 class BotRuntime:
@@ -42,12 +46,16 @@ class BotRuntime:
         state: RuntimeState | None = None,
         notifier: Notifier | None = None,
         repositories: PersistenceRepositories | None = None,
+        market_stream_health: StreamHealth | None = None,
+        monotonic: Callable[[], float] = time.monotonic,
     ) -> None:
         self.config = config
         self.state = state or RuntimeState()
         self.exchange = exchange or create_exchange_client(config)
         self.notifier = notifier or Notifier()
         self.repositories = repositories
+        self.market_stream_health = market_stream_health
+        self._monotonic = monotonic
         self.strategy = StrategyEngine()
         self.risk = RiskManager()
         self.positions = PositionManager(self.state)
@@ -83,7 +91,13 @@ class BotRuntime:
             order_results.extend(risk_order_results)
 
         strategy_decisions: list[StrategyDecision] = []
-        if include_strategy and not self.state.safe_mode:
+        market_data_fresh = self._market_data_fresh()
+        strategy_pause_reason = _strategy_pause_reason(
+            safe_mode=self.state.safe_mode,
+            market_data_fresh=market_data_fresh,
+            market_stream_health=self.market_stream_health,
+        )
+        if include_strategy and strategy_pause_reason is None:
             strategy_decisions = self._evaluate_strategy(current_positions)
             if self.repositories is not None:
                 self.repositories.strategy_decisions.append_many(strategy_decisions)
@@ -94,7 +108,9 @@ class BotRuntime:
         self._persist_bot_state(
             positions_seen=len(current_positions),
             ran_risk=include_risk,
-            ran_strategy=include_strategy and not self.state.safe_mode,
+            ran_strategy=include_strategy and strategy_pause_reason is None,
+            market_data_fresh=market_data_fresh,
+            strategy_pause_reason=strategy_pause_reason,
         )
 
         return RuntimeReport(
@@ -105,7 +121,9 @@ class BotRuntime:
             safe_mode=self.state.safe_mode,
             safe_mode_reason=self.state.safe_mode_reason,
             ran_risk=include_risk,
-            ran_strategy=include_strategy and not self.state.safe_mode,
+            ran_strategy=include_strategy and strategy_pause_reason is None,
+            market_data_fresh=market_data_fresh,
+            strategy_pause_reason=strategy_pause_reason,
         )
 
     def shutdown(self, *, reason: Literal["completed", "keyboard_interrupt", "error"]) -> None:
@@ -270,6 +288,8 @@ class BotRuntime:
         positions_seen: int,
         ran_risk: bool,
         ran_strategy: bool,
+        market_data_fresh: bool,
+        strategy_pause_reason: str | None,
     ) -> None:
         if self.repositories is None:
             return
@@ -281,14 +301,34 @@ class BotRuntime:
                 "safe_mode_reason": self.state.safe_mode_reason,
                 "ran_risk": ran_risk,
                 "ran_strategy": ran_strategy,
+                "market_data_fresh": market_data_fresh,
+                "strategy_pause_reason": strategy_pause_reason,
             },
         )
+
+    def _market_data_fresh(self) -> bool:
+        if self.market_stream_health is None:
+            return True
+        return self.market_stream_health.is_fresh(float(self._monotonic()))
 
 
 def _safe_mode_reason(report: ReconciliationReport) -> str | None:
     for issue in report.issues:
         if issue.severity == "safe_mode":
             return issue.code
+    return None
+
+
+def _strategy_pause_reason(
+    *,
+    safe_mode: bool,
+    market_data_fresh: bool,
+    market_stream_health: StreamHealth | None,
+) -> str | None:
+    if safe_mode:
+        return "safe_mode"
+    if market_stream_health is not None and not market_data_fresh:
+        return market_stream_health.reason or "market_data_stale"
     return None
 
 
