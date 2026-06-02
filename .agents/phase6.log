@@ -43,6 +43,22 @@
   - `uv run pytest tests/test_config_reload.py tests/test_storage.py` passed
     with 16 tests.
 
+## 2026-06-02 Slice 5
+
+- Added manual CLI reload entry point:
+  - `bybit-automation` with no arguments keeps the existing dry-run smoke
+    behavior,
+  - `bybit-automation run --config ...` can run an explicit config path,
+  - `bybit-automation reload --current ... --candidate ...` validates, applies
+    safe reloads, writes SQLite audit state, and returns non-zero for invalid or
+    restart-required candidates.
+- Redis config reload signal behavior remains conservative:
+  - the runtime records a seen signal in SQLite `bot_state.config_reload_signal`,
+  - Redis signals do not automatically apply config changes.
+- Verification:
+  - `uv run pytest tests/test_main.py tests/test_config_reload.py` passed with
+    13 tests.
+
 ## 2026-06-02 Slice 3
 
 - Strengthened unsafe reload reporting:
