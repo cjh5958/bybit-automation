@@ -41,3 +41,14 @@
 - Verification:
   - `uv run pytest tests/test_notifier.py tests/test_runtime.py` passed with 6
     tests.
+
+## 2026-06-02 Slice 4
+
+- Added retry/backoff policy foundation:
+  - capped exponential `RetryPolicy`,
+  - injectable sleep for tests and future runtime use,
+  - `run_with_retry()` helper for explicitly retryable operations.
+- This slice does not wrap order placement; order retries still need
+  idempotency-aware handling before use on exchange side effects.
+- Verification:
+  - `uv run pytest tests/test_resilience.py` passed with 5 tests.
