@@ -8,6 +8,7 @@ from bybit_automation.cache import CachedExchangeClient, create_realtime_cache
 from bybit_automation.config import ConfigError, load_config
 from bybit_automation.config_reload import ConfigReloadService
 from bybit_automation.exchange_client import create_exchange_client
+from bybit_automation.health import build_health_report
 from bybit_automation.storage import PersistenceRepositories, connect_sqlite
 from bybit_automation.ws import create_websocket_runtime
 
@@ -75,6 +76,13 @@ def run_with_config(config_path: Path) -> int:
                 "reason": websocket.health.reason if websocket.health is not None else None,
             },
         )
+        health = build_health_report(
+            config=config,
+            sqlite_conn=conn,
+            cache=cache,
+            websocket=websocket,
+        )
+        repositories.bot_state.set_json("health_report", health.to_payload())
         exchange = CachedExchangeClient(create_exchange_client(config), cache)
         runtime = BotRuntime(
             config,

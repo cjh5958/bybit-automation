@@ -14,3 +14,17 @@
   - added `log_operational_event()` helper that maps severity to logging level.
 - Verification:
   - `uv run pytest tests/test_operations.py` passed with 2 tests.
+
+## 2026-06-02 Slice 2
+
+- Added health checks:
+  - SQLite writable check,
+  - Redis enabled/availability check through `RealtimeCache.health`,
+  - WebSocket enabled/health check through `WebSocketRuntime`,
+  - exchange readiness check that treats `dry_run` as local-ready and
+    demo/live without credentials as failed.
+- CLI runtime smoke now stores `health_report` in SQLite `bot_state`.
+- Health checks do not open Bybit network connections.
+- Verification:
+  - `uv run pytest tests/test_health.py tests/test_main.py` passed with 8
+    tests.
