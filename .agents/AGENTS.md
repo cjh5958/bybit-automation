@@ -772,6 +772,34 @@ Minimum standard for development machines:
 - Local runtime artifacts such as `.venv`, `.uv-cache`, `.uv-python`, local
   config files, and `data/` are not committed.
 
+Required local environment inspection at the start of a coding session:
+
+- Identify the host OS, architecture, shell, and current timezone/date context.
+- Check the current git branch and worktree status before editing.
+- Check whether `uv` is available and whether `uv run python --version` reports
+  a supported Python version.
+- Check whether project-local `UV_CACHE_DIR` and `UV_PYTHON_INSTALL_DIR` are
+  needed because of cache, permission, or missing-interpreter problems.
+- Check relevant environment variables without printing secret values:
+  - `BYBIT_API_KEY` present or missing,
+  - `BYBIT_API_SECRET` present or missing,
+  - `REDIS_URL` present or missing when Redis is enabled,
+  - `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` present or missing when
+    Telegram is enabled,
+  - `BYBIT_AUTOMATION_CONFIG` present or missing if a non-default config path is
+    expected.
+- Check whether the active config is the committed template or a local runtime
+  config, and confirm the selected `app.mode` before running any command that
+  could reach Bybit.
+- Check required external services for the current phase:
+  - SQLite path is writable,
+  - Redis is reachable only when Redis-enabled behavior is being verified,
+  - Bybit network access and credentials are available only when an explicit
+    demo/live connectivity test has been approved.
+- Record any environment limitation in the active phase log when it affects
+  verification, especially missing credentials, unavailable network access,
+  missing Redis, or fallback to project-local uv cache/runtime directories.
+
 Recommended environment rebuild flow from a fresh checkout:
 
 1. Install basic OS tools if the machine does not already have them.
@@ -856,12 +884,16 @@ attempt to validate this project with unsupported system Python versions.
   setting `UV_CACHE_DIR` and `UV_PYTHON_INSTALL_DIR`.
 - At the start of coding work in a new session or on a new machine, inspect the
   development environment before making assumptions. Check at least:
-  - current shell and OS,
+  - host OS, architecture, shell, timezone/date context,
   - current git branch and worktree status,
   - whether `uv` is installed,
   - whether a usable Python runtime is available through `uv` or the shell,
+  - relevant environment variables by presence only, never by printing secret
+    values,
+  - active config path and selected `app.mode`,
   - whether required external services for the current phase are available
-    (for example Redis only when working on the Redis phase).
+    (for example Redis only when working on Redis behavior, or Bybit demo
+    credentials only when an approved demo connectivity test is in scope).
 - If the environment is incomplete, explain the issue and propose a concrete
   fix before continuing with changes that depend on it.
 - Prefer adding dependencies through `uv add` once `pyproject.toml` exists.
