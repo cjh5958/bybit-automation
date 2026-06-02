@@ -51,7 +51,7 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
 
 def run_with_config(config_path: Path) -> int:
     try:
-        config = load_config(config_path, resolve_secrets=False)
+        config = load_config(config_path, resolve_secrets=True)
     except ConfigError as exc:
         print(f"Config validation failed: {exc}")
         return 1
