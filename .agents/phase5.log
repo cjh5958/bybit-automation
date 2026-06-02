@@ -84,3 +84,29 @@
 - Verification:
   - `uv run pytest tests/test_cache.py tests/test_ws_ingestion.py
     tests/test_ws_events.py` passed with 15 tests.
+
+## 2026-06-02 Slice 6 and Final Verification
+
+- Added WebSocket runtime/CLI integration:
+  - added `[websocket]` config section,
+  - added typed `WebSocketConfig` validation,
+  - added `WebSocketRuntime` and `CompositeStreamEventHandler`,
+  - records `websocket_health` in SQLite `bot_state`,
+  - passes stream health into `BotRuntime` so enabled-but-unavailable streams
+    fail closed and pause strategy entries,
+  - keeps the template config disabled by default for dry-run safety.
+- Concrete Bybit WebSocket adapter status:
+  - not implemented in this phase because the project currently has no
+    WebSocket client dependency such as `ccxt.pro` or `websockets`,
+  - enabling WebSocket records failed health and pauses strategy entries instead
+    of pretending stream data is live.
+- Updated project documentation:
+  - marked Phase 5 complete in `.agents/TODO.md`,
+  - documented WebSocket config and safety semantics in `.agents/SPEC.md`,
+  - updated `.agents/AGENTS.md` to point future work at Phase 6 config reload.
+- Final Phase 5 verification:
+  - `uv run pytest` passed with 77 tests.
+  - `uv run ruff check .` passed.
+  - `uv run bybit-automation` passed and stayed in `dry_run` mode.
+- No live Bybit credentials were used.
+- No live/demo WebSocket connection was opened.

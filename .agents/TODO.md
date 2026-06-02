@@ -29,6 +29,7 @@ Rules:
 - [x] Define cross-platform minimum development environment and rebuild steps.
 - [x] Complete Phase 3 safe startup and reconciliation foundation.
 - [x] Complete Phase 4 Redis cache and coordination foundation.
+- [x] Complete Phase 5 WebSocket synchronization foundation.
 
 ## Pre-Phase 3: Development Environment Standardization
 
@@ -112,7 +113,7 @@ Rules:
 - [x] Add heartbeat monitoring.
 - [x] Add reconnect with backoff.
 - [x] Add stale-data detection.
-- [ ] Keep REST reconciliation as authoritative correction path.
+- [x] Keep REST reconciliation as authoritative correction path.
 
 ## Phase 6: Config Hot Reload
 

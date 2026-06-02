@@ -986,15 +986,15 @@ strictly needed to prove persistence; those belong to Phase 3.
 
 ## Immediate Next Recommended Step
 
-Start Phase 5:
+Start Phase 6:
 
-1. Add public market WebSocket ingestion behind a thin abstraction.
-2. Add private order/position/execution WebSocket ingestion behind explicit mode
-   guards.
-3. Add heartbeat monitoring and reconnect with backoff.
-4. Add stale-data detection.
-5. Keep REST reconciliation as the authoritative correction path.
-6. Keep Redis as a rebuildable realtime cache and coordination layer, not a
-   durable source of truth.
+1. Add config schema validation entry points that can validate a full reload
+   candidate without mutating runtime state.
+2. Add a manual reload command or service method.
+3. Store successful config versions in SQLite with reload reason metadata.
+4. Reject invalid config without changing the active runtime config.
+5. Reject unsafe hot changes or require an explicit safe restart.
+6. Keep Redis config reload signals as notification primitives only until the
+   manual reload path is safe and tested.
 7. Keep runtime behavior in `dry_run` unless the user explicitly approves demo
    or live exchange checks.

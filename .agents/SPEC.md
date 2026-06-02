@@ -121,6 +121,14 @@ enabled = false
 url_env = "REDIS_URL"
 namespace = "bybit-automation"
 
+[websocket]
+enabled = false
+public_market = true
+private_account = true
+stale_after_sec = 5
+reconnect_initial_delay_sec = 1
+reconnect_max_delay_sec = 30
+
 [strategy.defaults]
 enabled = true
 ema_period = 240
@@ -215,6 +223,8 @@ Minimum validation:
   - `first_trail_enable_threshold`
   - `second_trail_enable_threshold`
 - Redis settings are required only when Redis is enabled.
+- WebSocket stale-data and reconnect intervals are positive.
+- WebSocket reconnect initial delay does not exceed the max delay.
 
 Invalid config must not partially apply.
 
@@ -282,6 +292,25 @@ Preferred approach:
 
 Use dataclasses or another lightweight typed model first. Avoid adding a large
 dependency solely for config unless validation complexity later justifies it.
+
+### WebSocket Synchronization
+
+WebSocket support is a synchronization layer, not an order command path.
+
+Rules:
+
+- REST remains authoritative for startup snapshots, exchange commands, and
+  reconciliation repair.
+- Public market stream events may update realtime market cache.
+- Private order, position, and execution stream events may update realtime
+  account cache.
+- Stream health must be tracked through heartbeat/recent-message freshness.
+- If WebSocket data is stale or unavailable while enabled, strategy entry
+  evaluation should fail closed.
+- Redis cache entries created from WebSocket events remain rebuildable and are
+  not durable trading state.
+- A concrete Bybit WebSocket adapter must remain behind explicit mode guards and
+  must not enable live trading by default.
 
 ### Current Legacy Mapping
 

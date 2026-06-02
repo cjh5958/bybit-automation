@@ -7,6 +7,7 @@ from bybit_automation.cache import CachedExchangeClient, create_realtime_cache
 from bybit_automation.config import ConfigError, load_config
 from bybit_automation.exchange_client import create_exchange_client
 from bybit_automation.storage import PersistenceRepositories, connect_sqlite
+from bybit_automation.ws import create_websocket_runtime
 
 
 def main() -> int:
@@ -33,6 +34,7 @@ def run_with_config(config_path: Path) -> int:
         repositories = PersistenceRepositories.from_connection(conn)
         repositories.config_versions.record_file(config_path)
         cache = create_realtime_cache(config.redis)
+        websocket = create_websocket_runtime(config, cache)
         repositories.bot_state.set_json(
             "cache_health",
             {
@@ -41,8 +43,22 @@ def run_with_config(config_path: Path) -> int:
                 "message": cache.health.message,
             },
         )
+        repositories.bot_state.set_json(
+            "websocket_health",
+            {
+                "enabled": websocket.enabled,
+                "status": websocket.health.status if websocket.health is not None else "disabled",
+                "message": websocket.message,
+                "reason": websocket.health.reason if websocket.health is not None else None,
+            },
+        )
         exchange = CachedExchangeClient(create_exchange_client(config), cache)
-        runtime = BotRuntime(config, exchange=exchange, repositories=repositories)
+        runtime = BotRuntime(
+            config,
+            exchange=exchange,
+            repositories=repositories,
+            market_stream_health=websocket.health,
+        )
         report = runtime.run_once()
         print(
             "bybit-automation runtime tick OK "

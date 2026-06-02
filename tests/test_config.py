@@ -13,6 +13,8 @@ def test_parse_config_resolves_symbol_defaults() -> None:
     assert config.symbols[0].value_multiplier == 3
     assert config.symbols[1].value_multiplier == 4
     assert config.risk_blacklist == ("BTC/USDT:USDT",)
+    assert config.websocket.enabled is False
+    assert config.websocket.stale_after_sec == 5
 
 
 def test_parse_config_rejects_duplicate_symbols() -> None:
@@ -28,4 +30,13 @@ def test_parse_config_rejects_unordered_risk_thresholds() -> None:
     raw["risk"]["defaults"]["first_trail_enable_threshold"] = 0.2
 
     with pytest.raises(ConfigError, match="thresholds"):
+        parse_config(raw, resolve_secrets=False)
+
+
+def test_parse_config_rejects_invalid_websocket_backoff() -> None:
+    raw = valid_raw_config()
+    raw["websocket"]["reconnect_initial_delay_sec"] = 10
+    raw["websocket"]["reconnect_max_delay_sec"] = 5
+
+    with pytest.raises(ConfigError, match="websocket reconnect"):
         parse_config(raw, resolve_secrets=False)

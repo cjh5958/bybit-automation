@@ -65,6 +65,16 @@ class RedisConfig:
 
 
 @dataclass(frozen=True)
+class WebSocketConfig:
+    enabled: bool
+    public_market: bool
+    private_account: bool
+    stale_after_sec: float
+    reconnect_initial_delay_sec: float
+    reconnect_max_delay_sec: float
+
+
+@dataclass(frozen=True)
 class StrategyDefaults:
     enabled: bool
     ema_period: int
@@ -103,6 +113,7 @@ class BotConfig:
     runtime: RuntimeConfig
     sqlite: SqliteConfig
     redis: RedisConfig
+    websocket: WebSocketConfig
     strategy_defaults: StrategyDefaults
     risk_defaults: RiskDefaults
     risk_blacklist: tuple[str, ...]
@@ -130,6 +141,7 @@ def parse_config(raw: dict[str, Any], *, resolve_secrets: bool = True) -> BotCon
     sqlite_raw = _section(database_raw, "sqlite")
     cache_raw = _section(raw, "cache")
     redis_raw = _section(cache_raw, "redis")
+    websocket_raw = _section(raw, "websocket")
     strategy_raw = _section(raw, "strategy")
     strategy_defaults_raw = _section(strategy_raw, "defaults")
     risk_raw = _section(raw, "risk")
@@ -178,6 +190,21 @@ def parse_config(raw: dict[str, Any], *, resolve_secrets: bool = True) -> BotCon
         enabled=bool(_required(redis_raw, "enabled")),
         url_env=str(_required(redis_raw, "url_env")),
         namespace=str(_required(redis_raw, "namespace")),
+    )
+
+    websocket = WebSocketConfig(
+        enabled=bool(_required(websocket_raw, "enabled")),
+        public_market=bool(_required(websocket_raw, "public_market")),
+        private_account=bool(_required(websocket_raw, "private_account")),
+        stale_after_sec=_positive_float(_required(websocket_raw, "stale_after_sec"), "stale_after_sec"),
+        reconnect_initial_delay_sec=_positive_float(
+            _required(websocket_raw, "reconnect_initial_delay_sec"),
+            "reconnect_initial_delay_sec",
+        ),
+        reconnect_max_delay_sec=_positive_float(
+            _required(websocket_raw, "reconnect_max_delay_sec"),
+            "reconnect_max_delay_sec",
+        ),
     )
 
     strategy_defaults = StrategyDefaults(
@@ -231,6 +258,8 @@ def parse_config(raw: dict[str, Any], *, resolve_secrets: bool = True) -> BotCon
 
     if redis.enabled and not redis.namespace:
         raise ConfigError("redis namespace must not be empty when redis is enabled")
+    if websocket.reconnect_initial_delay_sec > websocket.reconnect_max_delay_sec:
+        raise ConfigError("websocket reconnect initial delay must not exceed max delay")
 
     if resolve_secrets:
         exchange = _resolve_exchange_secrets(exchange, app.mode)
@@ -244,6 +273,7 @@ def parse_config(raw: dict[str, Any], *, resolve_secrets: bool = True) -> BotCon
         runtime=runtime,
         sqlite=sqlite,
         redis=redis,
+        websocket=websocket,
         strategy_defaults=strategy_defaults,
         risk_defaults=risk_defaults,
         risk_blacklist=risk_blacklist,
@@ -375,4 +405,3 @@ def _validate_risk_thresholds(risk: RiskDefaults) -> None:
         <= risk.second_trail_enable_threshold
     ):
         raise ConfigError("risk trailing thresholds must be ordered from low to high")
-

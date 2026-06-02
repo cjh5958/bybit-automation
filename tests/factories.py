@@ -33,6 +33,14 @@ def valid_raw_config() -> dict:
                 "namespace": "bybit-automation",
             }
         },
+        "websocket": {
+            "enabled": False,
+            "public_market": True,
+            "private_account": True,
+            "stale_after_sec": 5,
+            "reconnect_initial_delay_sec": 1,
+            "reconnect_max_delay_sec": 30,
+        },
         "strategy": {
             "defaults": {
                 "enabled": True,

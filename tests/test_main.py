@@ -23,7 +23,7 @@ def test_run_with_config_bootstraps_sqlite_and_records_config(tmp_path: Path) ->
         assert result == 0
         assert conn.execute("SELECT COUNT(*) FROM config_versions").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM strategy_decisions").fetchone()[0] == 2
-        assert conn.execute("SELECT COUNT(*) FROM bot_state").fetchone()[0] == 4
+        assert conn.execute("SELECT COUNT(*) FROM bot_state").fetchone()[0] == 5
         cache_health = conn.execute(
             "SELECT value_json FROM bot_state WHERE key = 'cache_health'"
         ).fetchone()[0]
@@ -31,6 +31,15 @@ def test_run_with_config_bootstraps_sqlite_and_records_config(tmp_path: Path) ->
             "available": False,
             "enabled": False,
             "message": "redis disabled",
+        }
+        websocket_health = conn.execute(
+            "SELECT value_json FROM bot_state WHERE key = 'websocket_health'"
+        ).fetchone()[0]
+        assert json.loads(websocket_health) == {
+            "enabled": False,
+            "message": "websocket disabled",
+            "reason": None,
+            "status": "disabled",
         }
         shutdown = conn.execute(
             "SELECT value_json FROM bot_state WHERE key = 'shutdown'"

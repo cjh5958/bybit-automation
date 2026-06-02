@@ -33,6 +33,14 @@ enabled = false
 url_env = "REDIS_URL"
 namespace = "bybit-automation"
 
+[websocket]
+enabled = false
+public_market = true
+private_account = true
+stale_after_sec = 5
+reconnect_initial_delay_sec = 1
+reconnect_max_delay_sec = 30
+
 [strategy.defaults]
 enabled = true
 ema_period = 240
