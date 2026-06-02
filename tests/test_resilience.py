@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from bybit_automation.resilience import RetryPolicy, run_with_retry
+from bybit_automation.resilience import CircuitBreaker, RetryPolicy, run_with_retry
 
 
 def test_retry_policy_calculates_capped_delays() -> None:
@@ -69,3 +69,49 @@ def test_run_with_retry_does_not_retry_non_retryable_error() -> None:
         )
 
     assert sleeps == []
+
+
+def test_circuit_breaker_opens_after_failure_threshold() -> None:
+    breaker = CircuitBreaker(failure_threshold=2, recovery_timeout_sec=10)
+
+    assert breaker.allow_request(100)
+    breaker.record_failure(100)
+    assert breaker.state == "closed"
+    breaker.record_failure(101)
+
+    assert breaker.state == "open"
+    assert breaker.failure_count == 2
+    assert not breaker.allow_request(105)
+
+
+def test_circuit_breaker_allows_half_open_after_recovery_timeout() -> None:
+    breaker = CircuitBreaker(failure_threshold=1, recovery_timeout_sec=10)
+
+    breaker.record_failure(100)
+
+    assert not breaker.allow_request(109)
+    assert breaker.allow_request(110)
+    assert breaker.state == "half_open"
+
+
+def test_circuit_breaker_closes_after_half_open_success() -> None:
+    breaker = CircuitBreaker(failure_threshold=1, recovery_timeout_sec=10)
+    breaker.record_failure(100)
+    assert breaker.allow_request(110)
+
+    breaker.record_success()
+
+    assert breaker.state == "closed"
+    assert breaker.failure_count == 0
+    assert breaker.opened_at is None
+
+
+def test_circuit_breaker_reopens_after_half_open_failure() -> None:
+    breaker = CircuitBreaker(failure_threshold=1, recovery_timeout_sec=10)
+    breaker.record_failure(100)
+    assert breaker.allow_request(110)
+
+    breaker.record_failure(111)
+
+    assert breaker.state == "open"
+    assert breaker.opened_at == 111

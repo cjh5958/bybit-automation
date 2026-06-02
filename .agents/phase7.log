@@ -52,3 +52,16 @@
   idempotency-aware handling before use on exchange side effects.
 - Verification:
   - `uv run pytest tests/test_resilience.py` passed with 5 tests.
+
+## 2026-06-02 Slice 5
+
+- Added circuit breaker foundation:
+  - `closed`, `open`, and `half_open` states,
+  - configurable failure threshold,
+  - configurable recovery timeout,
+  - success closes the breaker and clears failure state,
+  - half-open failure reopens the breaker.
+- This slice keeps the breaker as a reusable policy object; future exchange and
+  cache wrappers can adopt it without changing order idempotency behavior.
+- Verification:
+  - `uv run pytest tests/test_resilience.py` passed with 9 tests.

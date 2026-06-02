@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import time
-from typing import Callable, TypeVar
+from typing import Callable, Literal, TypeVar
 
 
 T = TypeVar("T")
+CircuitBreakerState = Literal["closed", "open", "half_open"]
 
 
 @dataclass(frozen=True)
@@ -53,3 +54,48 @@ def run_with_retry(
     if last_error is None:
         raise RuntimeError("retry operation failed without an exception")
     raise last_error
+
+
+@dataclass
+class CircuitBreaker:
+    failure_threshold: int = 3
+    recovery_timeout_sec: float = 30.0
+    state: CircuitBreakerState = "closed"
+    failure_count: int = 0
+    opened_at: float | None = None
+
+    def __post_init__(self) -> None:
+        if self.failure_threshold <= 0:
+            raise ValueError("failure_threshold must be positive")
+        if self.recovery_timeout_sec < 0:
+            raise ValueError("recovery_timeout_sec must be non-negative")
+
+    def allow_request(self, now: float) -> bool:
+        if self.state == "closed":
+            return True
+        if self.state == "half_open":
+            return True
+        if self.opened_at is None:
+            return False
+        if now - self.opened_at >= self.recovery_timeout_sec:
+            self.state = "half_open"
+            return True
+        return False
+
+    def record_success(self) -> None:
+        self.state = "closed"
+        self.failure_count = 0
+        self.opened_at = None
+
+    def record_failure(self, now: float) -> None:
+        if self.state == "half_open":
+            self._open(now)
+            return
+
+        self.failure_count += 1
+        if self.failure_count >= self.failure_threshold:
+            self._open(now)
+
+    def _open(self, now: float) -> None:
+        self.state = "open"
+        self.opened_at = now
