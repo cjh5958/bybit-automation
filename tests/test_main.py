@@ -8,11 +8,12 @@ from bybit_automation.main import (
     main,
     reload_with_config,
     run_with_config,
+    test_with_config as runtime_test_with_config,
     verify_dry_run_with_config,
 )
 
 
-def test_run_with_config_bootstraps_sqlite_and_records_config(tmp_path: Path) -> None:
+def test_test_with_config_bootstraps_sqlite_and_records_config(tmp_path: Path) -> None:
     config_text = Path("configs/config.template.toml").read_text(encoding="utf-8")
     db_path = tmp_path / "bot.sqlite3"
     config_path = tmp_path / "config.toml"
@@ -21,7 +22,7 @@ def test_run_with_config_bootstraps_sqlite_and_records_config(tmp_path: Path) ->
         encoding="utf-8",
     )
 
-    result = run_with_config(config_path)
+    result = runtime_test_with_config(config_path)
 
     conn = sqlite3.connect(db_path)
     try:
@@ -58,7 +59,7 @@ def test_run_with_config_bootstraps_sqlite_and_records_config(tmp_path: Path) ->
         conn.close()
 
 
-def test_main_without_args_runs_default_command(monkeypatch, tmp_path: Path) -> None:
+def test_main_without_args_runs_default_test_command(monkeypatch, tmp_path: Path) -> None:
     config_text = Path("configs/config.template.toml").read_text(encoding="utf-8")
     db_path = tmp_path / "bot.sqlite3"
     config_path = tmp_path / "config.toml"
@@ -72,6 +73,40 @@ def test_main_without_args_runs_default_command(monkeypatch, tmp_path: Path) -> 
     (configs_dir / "config.template.toml").write_text(config_path.read_text(), encoding="utf-8")
 
     assert main([]) == 0
+
+
+def test_run_with_config_starts_scheduled_runtime_and_handles_interrupt(tmp_path: Path) -> None:
+    config_text = Path("configs/config.template.toml").read_text(encoding="utf-8")
+    db_path = tmp_path / "bot.sqlite3"
+    config_path = tmp_path / "config.toml"
+    config_path.write_text(
+        config_text.replace('path = "data/bot.sqlite3"', f'path = "{db_path.as_posix()}"'),
+        encoding="utf-8",
+    )
+    started = []
+
+    class InterruptingScheduledRuntime:
+        def __init__(self, runtime) -> None:
+            started.append(runtime.config.app.mode)
+
+        def run_forever(self) -> None:
+            raise KeyboardInterrupt
+
+    result = run_with_config(
+        config_path,
+        scheduled_runtime_factory=InterruptingScheduledRuntime,
+    )
+
+    conn = sqlite3.connect(db_path)
+    try:
+        assert result == 130
+        assert started == ["dry_run"]
+        shutdown = json.loads(
+            conn.execute("SELECT value_json FROM bot_state WHERE key = 'shutdown'").fetchone()[0]
+        )
+        assert shutdown["reason"] == "keyboard_interrupt"
+    finally:
+        conn.close()
 
 
 def test_reload_with_config_applies_safe_candidate_and_records_audit(tmp_path: Path) -> None:
