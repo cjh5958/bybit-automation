@@ -28,6 +28,16 @@
 - Verification:
   - `uv run pytest tests/test_config_reload.py` passed with 6 tests.
 
+## 2026-06-02 Slice 3
+
+- Strengthened unsafe reload reporting:
+  - reload plans expose `unsafe_change_paths`,
+  - reload results expose `restart_required_paths`,
+  - `requires_restart` result messages include the unsafe paths so CLI/admin
+    callers can tell the operator exactly which fields need a safe restart.
+- Verification:
+  - `uv run pytest tests/test_config_reload.py` passed with 6 tests.
+
 ## 2026-06-02 Slice 4
 
 - Added SQLite reload audit integration:
@@ -76,13 +86,3 @@
     status.
 - No live Bybit credentials were used.
 - No live/demo network connection was opened.
-
-## 2026-06-02 Slice 3
-
-- Strengthened unsafe reload reporting:
-  - reload plans expose `unsafe_change_paths`,
-  - reload results expose `restart_required_paths`,
-  - `requires_restart` result messages include the unsafe paths so CLI/admin
-    callers can tell the operator exactly which fields need a safe restart.
-- Verification:
-  - `uv run pytest tests/test_config_reload.py` passed with 6 tests.
