@@ -1018,17 +1018,17 @@ strictly needed to prove persistence; those belong to Phase 3.
 
 ## Immediate Next Recommended Step
 
-Start Phase 7:
+Start a Demo Validation / Release Candidate stage:
 
-1. Add structured logs or clearly typed log events for runtime, reload,
-   reconciliation, cache, and exchange operations.
-2. Add health checks that report SQLite, Redis, WebSocket, and exchange
-   readiness separately.
-3. Add notification severity levels for info/warning/safe-mode/error events.
-4. Add retry/backoff policies and circuit breakers for repeated external
-   failures.
-5. Add a dry-run/demo verification flow. Begin with Bybit demo read-only
-   connectivity preflight after the user explicitly provides demo credentials
-   and approves network verification.
-6. Keep runtime behavior in `dry_run` unless the user explicitly approves demo
-   or live exchange checks.
+1. Run local `bybit-automation verify-dry-run --config ...` before any network
+   test.
+2. Add a Bybit demo read-only preflight command that checks credentials, ticker,
+   open orders, and positions without placing or canceling orders.
+3. Require explicit user approval and demo credentials before any Bybit network
+   verification.
+4. Run demo shadow mode with exchange reads enabled but order execution still
+   dry-run.
+5. Only after read-only and shadow checks pass, plan a tiny demo order lifecycle
+   test with manual approval for each step.
+6. Record operational evidence from logs, SQLite `bot_state`, health reports,
+   reconciliation state, and config version records.

@@ -331,6 +331,41 @@ Rules:
 - A concrete Bybit WebSocket adapter must remain behind explicit mode guards and
   must not enable live trading by default.
 
+## Operational Stability
+
+Phase 7 establishes the local operational foundation for the refactored runtime.
+
+Operational event rules:
+
+- Important runtime, reload, reconciliation, cache, WebSocket, exchange, and
+  storage events should use typed operational event payloads.
+- Structured operational logs should be stable JSON payloads when emitted.
+- Notification severity levels are `info`, `warning`, `safe_mode`, and `error`.
+
+Health check rules:
+
+- SQLite, Redis, WebSocket, and exchange readiness must be reported separately.
+- Dry-run exchange readiness must not require network access.
+- Demo/live exchange readiness may check credential presence, but read-only
+  network preflight requires explicit user approval.
+
+Resilience rules:
+
+- Retry/backoff policies must be explicit and testable.
+- Do not blindly retry order placement unless idempotency and exchange
+  acceptance ambiguity are handled.
+- Circuit breakers should protect repeated external failures before strategy
+  logic continues as normal.
+
+Verification rules:
+
+- `bybit-automation verify-dry-run --config ...` is the local no-network
+  verification command.
+- `verify-dry-run` must reject non-`dry_run` configs before running the smoke
+  check.
+- Bybit demo validation belongs to the next release-candidate stage and starts
+  with read-only connectivity checks only after explicit approval.
+
 ### Current Legacy Mapping
 
 The legacy JSON templates map approximately as follows:

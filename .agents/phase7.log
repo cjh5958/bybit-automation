@@ -76,3 +76,22 @@
   connections.
 - Verification:
   - `uv run pytest tests/test_main.py` passed with 6 tests.
+
+## 2026-06-02 Slice 7 and Final Verification
+
+- Updated project documentation:
+  - marked Phase 7 complete in `.agents/TODO.md`,
+  - documented operational stability rules in `.agents/SPEC.md`,
+  - updated `.agents/AGENTS.md` to point future work at Demo Validation /
+    Release Candidate.
+- Final Phase 7 verification:
+  - `uv run pytest` passed with 107 tests.
+  - `uv run ruff check .` passed.
+  - `uv run bybit-automation` passed and stayed in `dry_run` mode.
+  - `uv run bybit-automation verify-dry-run --config configs/config.template.toml`
+    passed and stayed in `dry_run` mode.
+  - `uv run bybit-automation reload --current configs/config.template.toml
+    --candidate configs/config.template.toml` passed with unchanged reload
+    status.
+- No live Bybit credentials were used.
+- No live/demo network connection was opened.

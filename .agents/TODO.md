@@ -31,6 +31,7 @@ Rules:
 - [x] Complete Phase 4 Redis cache and coordination foundation.
 - [x] Complete Phase 5 WebSocket synchronization foundation.
 - [x] Complete Phase 6 config hot reload foundation.
+- [x] Complete Phase 7 operational stability foundation.
 
 ## Pre-Phase 3: Development Environment Standardization
 
@@ -133,4 +134,4 @@ Rules:
 - [x] Add retry/backoff policies.
 - [x] Add circuit breakers for repeated failures.
 - [x] Add dry-run verification flow.
-- [ ] Add deployment notes or helpers when runtime shape is stable.
+- [x] Add deployment notes or helpers when runtime shape is stable.
