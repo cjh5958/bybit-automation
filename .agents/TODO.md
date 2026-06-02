@@ -129,7 +129,7 @@ Rules:
 
 - [x] Add structured logs or clearly typed log events.
 - [x] Add health checks.
-- [ ] Add notification severity levels.
+- [x] Add notification severity levels.
 - [ ] Add retry/backoff policies.
 - [ ] Add circuit breakers for repeated failures.
 - [ ] Add dry-run verification flow.

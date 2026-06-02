@@ -28,3 +28,16 @@
 - Verification:
   - `uv run pytest tests/test_health.py tests/test_main.py` passed with 8
     tests.
+
+## 2026-06-02 Slice 3
+
+- Added notification severity levels:
+  - `info`,
+  - `warning`,
+  - `safe_mode`,
+  - `error`.
+- `Notifier` now records typed notification records while preserving the
+  existing `messages` compatibility view.
+- Verification:
+  - `uv run pytest tests/test_notifier.py tests/test_runtime.py` passed with 6
+    tests.
