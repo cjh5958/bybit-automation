@@ -30,11 +30,6 @@ default_leverage = {raw["exchange"]["default_leverage"]}
 api_key_env = "{raw["exchange"]["bybit"]["api_key_env"]}"
 api_secret_env = "{raw["exchange"]["bybit"]["api_secret_env"]}"
 
-[telegram]
-enabled = {str(raw["telegram"]["enabled"]).lower()}
-bot_token_env = "{raw["telegram"]["bot_token_env"]}"
-chat_id_env = "{raw["telegram"]["chat_id_env"]}"
-
 [runtime]
 strategy_interval_sec = {raw["runtime"]["strategy_interval_sec"]}
 risk_interval_sec = {raw["runtime"]["risk_interval_sec"]}

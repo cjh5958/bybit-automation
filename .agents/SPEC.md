@@ -54,11 +54,6 @@ Example:
 [exchange.bybit]
 api_key_env = "BYBIT_API_KEY"
 api_secret_env = "BYBIT_API_SECRET"
-
-[telegram]
-enabled = true
-bot_token_env = "TELEGRAM_BOT_TOKEN"
-chat_id_env = "TELEGRAM_CHAT_ID"
 ```
 
 Expected behavior:
@@ -100,11 +95,6 @@ default_leverage = 10
 [exchange.bybit]
 api_key_env = "BYBIT_API_KEY"
 api_secret_env = "BYBIT_API_SECRET"
-
-[telegram]
-enabled = true
-bot_token_env = "TELEGRAM_BOT_TOKEN"
-chat_id_env = "TELEGRAM_CHAT_ID"
 
 [runtime]
 strategy_interval_sec = 60
@@ -240,8 +230,7 @@ Safe hot-reloadable fields:
 - value multiplier,
 - risk/trailing thresholds,
 - blacklist,
-- runtime intervals,
-- notification enabled flag.
+- runtime intervals.
 
 Fields that should not be silently hot-reloaded:
 
@@ -371,7 +360,7 @@ Verification rules:
 The legacy JSON templates map approximately as follows:
 
 - `exchange_config.json.template` -> `[app]`, `[exchange]`,
-  `[exchange.bybit]`, `[telegram]`
+  `[exchange.bybit]`
 - `strategy_config.json.template` -> `[runtime]`, `[strategy.defaults]`,
   `[[symbols]]`
 - `trailing_config.json.template` -> `[risk]`, `[risk.defaults]`

@@ -13,11 +13,6 @@ default_leverage = 10
 api_key_env = "BYBIT_API_KEY"
 api_secret_env = "BYBIT_API_SECRET"
 
-[telegram]
-enabled = false
-bot_token_env = "TELEGRAM_BOT_TOKEN"
-chat_id_env = "TELEGRAM_CHAT_ID"
-
 [runtime]
 strategy_interval_sec = 60
 risk_interval_sec = 1

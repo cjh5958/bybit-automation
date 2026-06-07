@@ -8,7 +8,6 @@ dependencies = [
     "ccxt==4.4.45",
     "pandas==2.2.3",
     "redis>=7.4.0",
-    "telebot==0.0.5",
 ]
 
 [project.scripts]

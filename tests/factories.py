@@ -14,11 +14,6 @@ def valid_raw_config() -> dict:
                 "api_secret_env": "BYBIT_API_SECRET",
             },
         },
-        "telegram": {
-            "enabled": False,
-            "bot_token_env": "TELEGRAM_BOT_TOKEN",
-            "chat_id_env": "TELEGRAM_CHAT_ID",
-        },
         "runtime": {
             "strategy_interval_sec": 60,
             "risk_interval_sec": 1,

@@ -34,15 +34,6 @@ class ExchangeConfig:
 
 
 @dataclass(frozen=True)
-class TelegramConfig:
-    enabled: bool
-    bot_token_env: str
-    chat_id_env: str
-    bot_token: str | None = None
-    chat_id: str | None = None
-
-
-@dataclass(frozen=True)
 class RuntimeConfig:
     strategy_interval_sec: float
     risk_interval_sec: float
@@ -109,7 +100,6 @@ class SymbolConfig:
 class BotConfig:
     app: AppConfig
     exchange: ExchangeConfig
-    telegram: TelegramConfig
     runtime: RuntimeConfig
     sqlite: SqliteConfig
     redis: RedisConfig
@@ -135,7 +125,6 @@ def parse_config(raw: dict[str, Any], *, resolve_secrets: bool = True) -> BotCon
     app_raw = _section(raw, "app")
     exchange_raw = _section(raw, "exchange")
     bybit_raw = _section(exchange_raw, "bybit")
-    telegram_raw = _section(raw, "telegram")
     runtime_raw = _section(raw, "runtime")
     database_raw = _section(raw, "database")
     sqlite_raw = _section(database_raw, "sqlite")
@@ -160,12 +149,6 @@ def parse_config(raw: dict[str, Any], *, resolve_secrets: bool = True) -> BotCon
         default_leverage=_positive_int(_required(exchange_raw, "default_leverage"), "default_leverage"),
         api_key_env=str(_required(bybit_raw, "api_key_env")),
         api_secret_env=str(_required(bybit_raw, "api_secret_env")),
-    )
-
-    telegram = TelegramConfig(
-        enabled=bool(_required(telegram_raw, "enabled")),
-        bot_token_env=str(_required(telegram_raw, "bot_token_env")),
-        chat_id_env=str(_required(telegram_raw, "chat_id_env")),
     )
 
     runtime = RuntimeConfig(
@@ -263,13 +246,11 @@ def parse_config(raw: dict[str, Any], *, resolve_secrets: bool = True) -> BotCon
 
     if resolve_secrets:
         exchange = _resolve_exchange_secrets(exchange, app.mode)
-        telegram = _resolve_telegram_secrets(telegram)
         redis = _resolve_redis_url(redis)
 
     return BotConfig(
         app=app,
         exchange=exchange,
-        telegram=telegram,
         runtime=runtime,
         sqlite=sqlite,
         redis=redis,
@@ -334,14 +315,6 @@ def _resolve_exchange_secrets(exchange: ExchangeConfig, mode: Mode) -> ExchangeC
     if mode in {"demo", "live"} and (not api_key or not api_secret):
         raise ConfigError("exchange API credentials are required outside dry_run mode")
     return ExchangeConfig(**{**exchange.__dict__, "api_key": api_key, "api_secret": api_secret})
-
-
-def _resolve_telegram_secrets(telegram: TelegramConfig) -> TelegramConfig:
-    bot_token = os.getenv(telegram.bot_token_env)
-    chat_id = os.getenv(telegram.chat_id_env)
-    if telegram.enabled and (not bot_token or not chat_id):
-        raise ConfigError("telegram credentials are required when telegram is enabled")
-    return TelegramConfig(**{**telegram.__dict__, "bot_token": bot_token, "chat_id": chat_id})
 
 
 def _resolve_redis_url(redis: RedisConfig) -> RedisConfig:

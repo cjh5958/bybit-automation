@@ -128,7 +128,6 @@ dependencies = [
     { name = "ccxt" },
     { name = "pandas" },
     { name = "redis" },
-    { name = "telebot" },
 ]
 
 [package.dev-dependencies]
@@ -142,7 +141,6 @@ requires-dist = [
     { name = "ccxt", specifier = "==4.4.45" },
     { name = "pandas", specifier = "==2.2.3" },
     { name = "redis", specifier = ">=7.4.0" },
-    { name = "telebot", specifier = "==0.0.5" },
 ]
 
 [package.metadata.requires-dev]
@@ -985,18 +983,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pytelegrambotapi"
-version = "4.33.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "requests" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/6b/3c/ab2936cb4ab75c59fab8343e34df2472c79f9f6d2f20b3cdf27e215231b4/pytelegrambotapi-4.33.0.tar.gz", hash = "sha256:df35be14d015d6ac874768db848d0c6d7864f586b242d4902efa2244efca6512", size = 1378027, upload-time = "2026-04-11T19:28:11.13Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/82/c6/383f0a951afeec0f6b44cba460ea651668ceb0a86d82f9c91ca696c52729/pytelegrambotapi-4.33.0-py3-none-any.whl", hash = "sha256:0c34ded8c6f7afe41b8d591ef102aeaa9ca158d97ec50309279d09a6603e0ffb", size = 308423, upload-time = "2026-04-11T19:28:08.961Z" },
-]
-
-[[package]]
 name = "pytest"
 version = "9.0.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1101,19 +1087,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz", hash = "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81", size = 34031, upload-time = "2024-12-04T17:35:28.174Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050, upload-time = "2024-12-04T17:35:26.475Z" },
-]
-
-[[package]]
-name = "telebot"
-version = "0.0.5"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "pytelegrambotapi" },
-    { name = "requests" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/1f/3b/e4188cffaf370f432f15d518cbb53a438200ee7ef68c6db1acab337634e1/telebot-0.0.5.tar.gz", hash = "sha256:848a5885b57247b65edd0e92647b4372ebd8d41611dca3f344788c11deac2571", size = 4752, upload-time = "2023-02-14T15:13:44.409Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ad/2f/d8d669be86c42dd2075d7b25bb6de73a3181661a79ef6a3c53dc811f17a1/telebot-0.0.5-py3-none-any.whl", hash = "sha256:50327c240243480d40ade4ea5bea4f464bf57d4ff000ea669fcd705396074863", size = 4840, upload-time = "2023-02-14T15:13:42.698Z" },
 ]
 
 [[package]]

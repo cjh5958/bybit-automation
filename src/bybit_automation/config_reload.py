@@ -180,7 +180,6 @@ SAFE_PATHS = {
     "risk_defaults.low_trail_stop_loss_pct",
     "risk_defaults.trail_stop_loss_pct",
     "risk_defaults.higher_trail_stop_loss_pct",
-    "telegram.enabled",
 }
 
 SAFE_PATH_PREFIXES = {

@@ -15,8 +15,8 @@ There is also a helper setup script:
 
 - `fast_setup.py`
 
-The current scripts appear to be written as a personal/experimental automated
-trading system using `ccxt`, `pandas`, and Telegram notifications.
+The current legacy scripts appear to be written as a personal/experimental
+automated trading system using `ccxt`, `pandas`, and script-local notifications.
 
 The user's goal is to gradually refactor this into a more reliable single-process
 trading service with:
@@ -47,7 +47,6 @@ Current dependencies from `requirements.txt`:
 ```text
 ccxt==4.4.45
 pandas==2.2.3
-telebot==0.0.5
 ```
 
 Environment note from prior inspection:
@@ -104,12 +103,12 @@ Observed behavior:
 
 - Loads the same config files from `./configs`.
 - Connects to Bybit through `ccxt.bybit`.
-- Initializes Telegram bot using config credentials.
+- Initializes legacy script-local notification code using config credentials.
 - Runs a frequent polling loop on `monitor_interval`.
 - Fetches all positions.
 - For each non-zero position:
   - Skips symbols in `blacklist`.
-  - Detects new positions and sends Telegram notification.
+  - Detects new positions and sends a legacy notification.
   - Calculates current profit percentage.
   - Tracks highest seen profit percentage in memory.
   - Assigns a trailing tier based on thresholds:
@@ -122,7 +121,7 @@ Observed behavior:
     - first-tier trailing stop,
     - second-tier trailing stop.
   - Closes positions using market orders.
-  - Sends Telegram messages on detected/closed positions.
+  - Sends legacy messages on detected/closed positions.
 
 Inferred developer intent:
 
@@ -241,7 +240,7 @@ Suggested runtime modules:
 - `RealtimeCache`
   - Redis-backed latest prices, locks, and short-lived runtime data.
 - `Notifier`
-  - Telegram and future notification channels.
+  - Local operational notification events and future notification channels.
 
 Suggested state machine per symbol:
 
@@ -429,7 +428,7 @@ Potential hot-reloadable fields:
 - trailing thresholds
 - blacklist
 - monitor intervals
-- notification toggles
+- notification severity thresholds
 
 Fields that should not be casually hot-reloaded:
 
@@ -443,7 +442,6 @@ Fields that should not be casually hot-reloaded:
 Potential reload mechanisms:
 
 - CLI/admin command
-- Telegram command
 - file modification watcher
 - Redis pub/sub signal
 
@@ -784,8 +782,6 @@ Required local environment inspection at the start of a coding session:
   - `BYBIT_API_KEY` present or missing,
   - `BYBIT_API_SECRET` present or missing,
   - `REDIS_URL` present or missing when Redis is enabled,
-  - `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` present or missing when
-    Telegram is enabled,
   - `BYBIT_AUTOMATION_CONFIG` present or missing if a non-default config path is
     expected.
 - Check whether the active config is the committed template or a local runtime
