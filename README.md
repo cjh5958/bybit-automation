@@ -110,6 +110,19 @@ export BYBIT_API_SECRET="your-demo-api-secret"
 
 Never commit API keys or secrets.
 
+Alternatively, copy `.env.example` to `.env` and set local values there:
+
+```bash
+cp .env.example .env
+```
+
+The CLI loads `.env` from the project root by default and does not override
+environment variables already set by your shell. To use a different file:
+
+```bash
+uv run bybit-automation run --config configs/config.toml --env-file configs/demo.env
+```
+
 ### Symbols
 
 Configure the symbols you want to monitor:
@@ -169,7 +182,9 @@ uv run bybit-automation run --config configs/config.toml
 ```
 
 Stop the service with `Ctrl+C`. The shutdown reason is recorded in SQLite
-`bot_state`.
+`bot_state`. In service mode, shutdown also best-effort cancels open orders for
+enabled symbols in the active config and records the cleanup result in
+`bot_state.shutdown_cleanup`.
 
 Run a local no-network dry-run verification:
 

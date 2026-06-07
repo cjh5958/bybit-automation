@@ -59,6 +59,30 @@ def test_test_with_config_bootstraps_sqlite_and_records_config(tmp_path: Path) -
         conn.close()
 
 
+def test_test_with_config_loads_explicit_env_file(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    config_text = Path("configs/config.template.toml").read_text(encoding="utf-8")
+    db_path = tmp_path / "bot.sqlite3"
+    config_path = tmp_path / "config.toml"
+    env_path = tmp_path / "demo.env"
+    config_path.write_text(
+        config_text.replace('path = "data/bot.sqlite3"', f'path = "{db_path.as_posix()}"'),
+        encoding="utf-8",
+    )
+    loaded_env_files = []
+    monkeypatch.setattr(
+        "bybit_automation.main.load_runtime_env",
+        lambda env_file: loaded_env_files.append(env_file),
+    )
+
+    result = runtime_test_with_config(config_path, env_file=env_path)
+
+    assert result == 0
+    assert loaded_env_files == [env_path]
+
+
 def test_main_without_args_runs_default_test_command(monkeypatch, tmp_path: Path) -> None:
     config_text = Path("configs/config.template.toml").read_text(encoding="utf-8")
     db_path = tmp_path / "bot.sqlite3"
@@ -105,6 +129,20 @@ def test_run_with_config_starts_scheduled_runtime_and_handles_interrupt(tmp_path
             conn.execute("SELECT value_json FROM bot_state WHERE key = 'shutdown'").fetchone()[0]
         )
         assert shutdown["reason"] == "keyboard_interrupt"
+        cleanup = json.loads(
+            conn.execute(
+                "SELECT value_json FROM bot_state WHERE key = 'shutdown_cleanup'"
+            ).fetchone()[0]
+        )
+        assert cleanup["reason"] == "keyboard_interrupt"
+        assert cleanup["success"] is True
+        assert [item["symbol"] for item in cleanup["symbols"]] == [
+            "MOODENG/USDT:USDT",
+            "1000X/USDT:USDT",
+        ]
+        assert conn.execute("SELECT COUNT(*) FROM orders WHERE action = 'cancel_all'").fetchone()[
+            0
+        ] == 2
     finally:
         conn.close()
 

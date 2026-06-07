@@ -4,12 +4,14 @@ import argparse
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+import signal
 import sqlite3
 
 from bybit_automation.app import BotRuntime
 from bybit_automation.cache import CachedExchangeClient, create_realtime_cache
 from bybit_automation.config import ConfigError, load_config
 from bybit_automation.config_reload import ConfigReloadService
+from bybit_automation.env import load_runtime_env
 from bybit_automation.exchange_client import create_exchange_client
 from bybit_automation.health import build_health_report
 from bybit_automation.scheduler import ScheduledRuntime
@@ -26,12 +28,12 @@ def main(argv: list[str] | None = None) -> int:
 
     args = _parse_args(argv)
     if args.command == "reload":
-        return reload_with_config(Path(args.current), Path(args.candidate))
+        return reload_with_config(Path(args.current), Path(args.candidate), env_file=args.env_file)
     if args.command == "test":
-        return test_with_config(Path(args.config))
+        return test_with_config(Path(args.config), env_file=args.env_file)
     if args.command == "verify-dry-run":
-        return verify_dry_run_with_config(Path(args.config))
-    return run_with_config(Path(args.config))
+        return verify_dry_run_with_config(Path(args.config), env_file=args.env_file)
+    return run_with_config(Path(args.config), env_file=args.env_file)
 
 
 def _parse_args(argv: list[str] | None) -> argparse.Namespace:
@@ -40,21 +42,26 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
 
     run_parser = subparsers.add_parser("run")
     run_parser.add_argument("--config", default="configs/config.template.toml")
+    run_parser.add_argument("--env-file")
 
     test_parser = subparsers.add_parser("test")
     test_parser.add_argument("--config", default="configs/config.template.toml")
+    test_parser.add_argument("--env-file")
 
     reload_parser = subparsers.add_parser("reload")
     reload_parser.add_argument("--current", default="configs/config.template.toml")
     reload_parser.add_argument("--candidate", required=True)
+    reload_parser.add_argument("--env-file")
 
     verify_parser = subparsers.add_parser("verify-dry-run")
     verify_parser.add_argument("--config", default="configs/config.template.toml")
+    verify_parser.add_argument("--env-file")
 
     parsed = parser.parse_args(argv)
     if parsed.command is None:
         parsed.command = "test"
         parsed.config = "configs/config.template.toml"
+        parsed.env_file = None
     return parsed
 
 
@@ -64,8 +71,9 @@ class RuntimeContext:
     runtime: BotRuntime
 
 
-def test_with_config(config_path: Path) -> int:
+def test_with_config(config_path: Path, *, env_file: str | Path | None = None) -> int:
     try:
+        load_runtime_env(env_file)
         config = load_config(config_path, resolve_secrets=True)
     except ConfigError as exc:
         print(f"Config validation failed: {exc}")
@@ -100,9 +108,11 @@ def test_with_config(config_path: Path) -> int:
 def run_with_config(
     config_path: Path,
     *,
+    env_file: str | Path | None = None,
     scheduled_runtime_factory: Callable[[BotRuntime], ScheduledRuntime] = ScheduledRuntime,
 ) -> int:
     try:
+        load_runtime_env(env_file)
         context = _create_runtime_context(config_path)
     except ConfigError as exc:
         print(f"Config validation failed: {exc}")
@@ -113,15 +123,19 @@ def run_with_config(
             "bybit-automation runtime service started "
             f"(mode={context.runtime.config.app.mode}, symbols={len(context.runtime.config.symbols)})"
         )
+        previous_signal_handlers = _install_shutdown_signal_handlers()
         scheduled_runtime_factory(context.runtime).run_forever()
+        context.runtime.shutdown(reason="completed", cancel_open_orders=True)
     except KeyboardInterrupt:
-        context.runtime.shutdown(reason="keyboard_interrupt")
+        context.runtime.shutdown(reason="keyboard_interrupt", cancel_open_orders=True)
         print("bybit-automation interrupted; shutdown state saved")
         return 130
     except Exception:
-        context.runtime.shutdown(reason="error")
+        context.runtime.shutdown(reason="error", cancel_open_orders=True)
         raise
     finally:
+        if "previous_signal_handlers" in locals():
+            _restore_signal_handlers(previous_signal_handlers)
         context.conn.close()
     return 0
 
@@ -168,8 +182,14 @@ def _create_runtime_context(config_path: Path) -> RuntimeContext:
     return RuntimeContext(conn=conn, runtime=runtime)
 
 
-def reload_with_config(current_config_path: Path, candidate_config_path: Path) -> int:
+def reload_with_config(
+    current_config_path: Path,
+    candidate_config_path: Path,
+    *,
+    env_file: str | Path | None = None,
+) -> int:
     try:
+        load_runtime_env(env_file)
         current_config = load_config(current_config_path, resolve_secrets=False)
     except ConfigError as exc:
         print(f"Current config validation failed: {exc}")
@@ -190,8 +210,9 @@ def reload_with_config(current_config_path: Path, candidate_config_path: Path) -
         conn.close()
 
 
-def verify_dry_run_with_config(config_path: Path) -> int:
+def verify_dry_run_with_config(config_path: Path, *, env_file: str | Path | None = None) -> int:
     try:
+        load_runtime_env(env_file)
         config = load_config(config_path, resolve_secrets=False)
     except ConfigError as exc:
         print(f"Config validation failed: {exc}")
@@ -201,7 +222,7 @@ def verify_dry_run_with_config(config_path: Path) -> int:
         print(f"Dry-run verification requires app.mode=dry_run, got {config.app.mode}")
         return 2
 
-    result = test_with_config(config_path)
+    result = test_with_config(config_path, env_file=env_file)
     if result == 0:
         print("bybit-automation dry-run verification OK")
     return result
@@ -223,3 +244,25 @@ def _record_config_reload_signal(
             "applied": False,
         },
     )
+
+
+def _install_shutdown_signal_handlers() -> dict[signal.Signals, signal.Handlers]:
+    signals = [signal.SIGINT, signal.SIGTERM]
+    sigbreak = getattr(signal, "SIGBREAK", None)
+    if sigbreak is not None:
+        signals.append(sigbreak)
+
+    previous_handlers: dict[signal.Signals, signal.Handlers] = {}
+    for shutdown_signal in signals:
+        previous_handlers[shutdown_signal] = signal.getsignal(shutdown_signal)
+        signal.signal(shutdown_signal, _raise_keyboard_interrupt)
+    return previous_handlers
+
+
+def _restore_signal_handlers(previous_handlers: dict[signal.Signals, signal.Handlers]) -> None:
+    for shutdown_signal, handler in previous_handlers.items():
+        signal.signal(shutdown_signal, handler)
+
+
+def _raise_keyboard_interrupt(signum: int, frame: object | None) -> None:
+    raise KeyboardInterrupt

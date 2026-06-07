@@ -19,10 +19,13 @@ class PersistentFakeExchange:
         positions: list[Position] | None = None,
         snapshots: dict[str, MarketSnapshot] | None = None,
         open_orders: list[OpenOrder] | None = None,
+        cancel_failures: set[str] | None = None,
     ) -> None:
         self.positions = positions or []
         self.snapshots = snapshots or {}
         self.open_orders = open_orders or []
+        self.cancel_failures = cancel_failures or set()
+        self.canceled_symbols: list[str] = []
 
     def fetch_positions(self) -> list[Position]:
         return self.positions
@@ -35,6 +38,31 @@ class PersistentFakeExchange:
 
     def fetch_trading_rules(self, symbol: str) -> TradingRules:
         return TradingRules(symbol=symbol, tick_size=0.01, min_amount=0.001)
+
+    def create_limit_order(
+        self,
+        *,
+        symbol: str,
+        side: str,
+        amount: float,
+        price: float,
+    ) -> dict:
+        return {"id": f"{symbol}-{side}-limit", "amount": amount, "price": price}
+
+    def create_market_order(
+        self,
+        *,
+        symbol: str,
+        side: str,
+        amount: float,
+    ) -> dict:
+        return {"id": f"{symbol}-{side}-market", "amount": amount}
+
+    def cancel_all_orders(self, symbol: str) -> list[str]:
+        if symbol in self.cancel_failures:
+            raise RuntimeError(f"cancel failed for {symbol}")
+        self.canceled_symbols.append(symbol)
+        return [order.exchange_order_id for order in self.open_orders if order.symbol == symbol]
 
 
 def repositories_for(tmp_path: Path) -> tuple[PersistenceRepositories, sqlite3.Connection]:
@@ -297,5 +325,59 @@ def test_runtime_shutdown_persists_final_state(tmp_path: Path) -> None:
         "safe_mode": True,
         "safe_mode_reason": "unknown_exchange_open_order",
     }
+
+    conn.close()
+
+
+def test_runtime_shutdown_cleanup_continues_after_symbol_failure(tmp_path: Path) -> None:
+    raw = valid_raw_config()
+    raw["symbols"] = [
+        {"symbol": "MOODENG/USDT:USDT", "enabled": True},
+        {"symbol": "1000X/USDT:USDT", "enabled": True},
+        {"symbol": "DISABLED/USDT:USDT", "enabled": False},
+    ]
+    raw["app"]["mode"] = "demo"
+    config = parse_config(raw, resolve_secrets=False)
+    repositories, conn = repositories_for(tmp_path)
+    exchange = PersistentFakeExchange(
+        open_orders=[
+            OpenOrder(
+                exchange_order_id="order-2",
+                symbol="1000X/USDT:USDT",
+                side="sell",
+                amount=1,
+                price=100,
+                status="open",
+            )
+        ],
+        cancel_failures={"MOODENG/USDT:USDT"},
+    )
+    runtime = BotRuntime(config, exchange=exchange, repositories=repositories)
+
+    runtime.shutdown(reason="error", cancel_open_orders=True)
+
+    cleanup = repositories.bot_state.get_json("shutdown_cleanup")
+    assert cleanup == {
+        "reason": "error",
+        "success": False,
+        "symbols": [
+            {
+                "symbol": "MOODENG/USDT:USDT",
+                "status": "error",
+                "error": "cancel failed for MOODENG/USDT:USDT",
+            },
+            {
+                "symbol": "1000X/USDT:USDT",
+                "status": "success",
+                "submitted": True,
+                "dry_run": False,
+                "canceled_count": 1,
+                "message": "canceled 1 open orders",
+            },
+        ],
+    }
+    assert repositories.bot_state.get_json("shutdown")["reason"] == "error"
+    assert exchange.canceled_symbols == ["1000X/USDT:USDT"]
+    assert conn.execute("SELECT COUNT(*) FROM orders WHERE action = 'cancel_all'").fetchone()[0] == 1
 
     conn.close()

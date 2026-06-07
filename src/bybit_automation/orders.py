@@ -26,6 +26,7 @@ class OrderResult:
     dry_run: bool
     message: str
     exchange_order_id: str | None = None
+    canceled_order_ids: tuple[str, ...] = ()
 
 
 class OrderExecutor(Protocol):
@@ -100,6 +101,7 @@ class OrderManager:
                 dry_run=False,
                 message=f"canceled {len(canceled_order_ids)} open orders",
                 exchange_order_id=None,
+                canceled_order_ids=tuple(canceled_order_ids),
             )
 
         raise ValueError(f"unsupported order action: {intent.action}")

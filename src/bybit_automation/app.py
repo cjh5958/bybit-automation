@@ -126,7 +126,15 @@ class BotRuntime:
             strategy_pause_reason=strategy_pause_reason,
         )
 
-    def shutdown(self, *, reason: Literal["completed", "keyboard_interrupt", "error"]) -> None:
+    def shutdown(
+        self,
+        *,
+        reason: Literal["completed", "keyboard_interrupt", "error"],
+        cancel_open_orders: bool = False,
+    ) -> None:
+        if cancel_open_orders:
+            self._cleanup_open_orders_on_shutdown(reason=reason)
+
         if self.repositories is None:
             return
         self.repositories.bot_state.set_json(
@@ -303,6 +311,55 @@ class BotRuntime:
                 "ran_strategy": ran_strategy,
                 "market_data_fresh": market_data_fresh,
                 "strategy_pause_reason": strategy_pause_reason,
+            },
+        )
+
+    def _cleanup_open_orders_on_shutdown(
+        self,
+        *,
+        reason: Literal["completed", "keyboard_interrupt", "error"],
+    ) -> None:
+        if self.repositories is None:
+            return
+
+        cleanup_results: list[dict[str, object]] = []
+        for symbol_config in self.config.symbols:
+            if not symbol_config.enabled:
+                continue
+
+            intent = OrderIntent(
+                action="cancel_all",
+                symbol=symbol_config.symbol,
+                reason=f"shutdown cleanup: {reason}",
+            )
+            try:
+                result = self.orders.execute(intent)
+                self._persist_order_results([result])
+                cleanup_results.append(
+                    {
+                        "symbol": symbol_config.symbol,
+                        "status": "success",
+                        "submitted": result.submitted,
+                        "dry_run": result.dry_run,
+                        "canceled_count": len(result.canceled_order_ids),
+                        "message": result.message,
+                    }
+                )
+            except Exception as exc:  # noqa: BLE001 - shutdown cleanup is best-effort.
+                cleanup_results.append(
+                    {
+                        "symbol": symbol_config.symbol,
+                        "status": "error",
+                        "error": str(exc),
+                    }
+                )
+
+        self.repositories.bot_state.set_json(
+            "shutdown_cleanup",
+            {
+                "reason": reason,
+                "success": all(result["status"] == "success" for result in cleanup_results),
+                "symbols": cleanup_results,
             },
         )
 

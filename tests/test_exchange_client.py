@@ -126,6 +126,39 @@ def test_ccxt_client_rejects_dry_run_config() -> None:
         CcxtBybitExchangeClient.from_config(config)
 
 
+def test_ccxt_client_enables_bybit_time_difference_adjustment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    created_options = {}
+    demo_enabled = []
+
+    class FakeBybitFactoryExchange:
+        def __init__(self, options: dict) -> None:
+            created_options.update(options)
+
+        def enable_demo_trading(self, enabled: bool) -> None:
+            demo_enabled.append(enabled)
+
+    monkeypatch.setattr(
+        "bybit_automation.exchange_client.ccxt.bybit",
+        FakeBybitFactoryExchange,
+    )
+    monkeypatch.setenv("BYBIT_API_KEY", "demo-key")
+    monkeypatch.setenv("BYBIT_API_SECRET", "demo-secret")
+    raw = valid_raw_config()
+    raw["app"]["mode"] = "demo"
+    config = parse_config(raw, resolve_secrets=True)
+
+    CcxtBybitExchangeClient.from_config(config)
+
+    assert created_options["options"] == {
+        "defaultType": "future",
+        "adjustForTimeDifference": True,
+        "recvWindow": 10000,
+    }
+    assert demo_enabled == [True]
+
+
 def test_ccxt_client_parses_non_zero_positions() -> None:
     client = CcxtBybitExchangeClient(exchange=FakeCcxtExchange())
 

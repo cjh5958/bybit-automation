@@ -102,7 +102,11 @@ class CcxtBybitExchangeClient:
                 "apiKey": config.exchange.api_key,
                 "secret": config.exchange.api_secret,
                 "enableRateLimit": config.exchange.enable_rate_limit,
-                "options": {"defaultType": config.exchange.account_type},
+                "options": {
+                    "defaultType": config.exchange.account_type,
+                    "adjustForTimeDifference": True,
+                    "recvWindow": 10000,
+                },
             }
         )
 
