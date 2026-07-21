@@ -79,9 +79,10 @@ class BotRuntime:
         if self.repositories is not None:
             self.repositories.positions.append_many(current_positions)
 
+        should_run_risk = include_risk and self.config.risk_defaults.enabled
         risk_decisions: list[RiskDecision] = []
         order_results: list[OrderResult] = []
-        if include_risk:
+        if should_run_risk:
             risk_decisions = self._evaluate_risk(current_positions)
             if self.repositories is not None:
                 self.repositories.risk_events.append_many(risk_decisions)
@@ -107,7 +108,7 @@ class BotRuntime:
 
         self._persist_bot_state(
             positions_seen=len(current_positions),
-            ran_risk=include_risk,
+            ran_risk=should_run_risk,
             ran_strategy=include_strategy and strategy_pause_reason is None,
             market_data_fresh=market_data_fresh,
             strategy_pause_reason=strategy_pause_reason,
@@ -120,7 +121,7 @@ class BotRuntime:
             order_results=tuple(order_results),
             safe_mode=self.state.safe_mode,
             safe_mode_reason=self.state.safe_mode_reason,
-            ran_risk=include_risk,
+            ran_risk=should_run_risk,
             ran_strategy=include_strategy and strategy_pause_reason is None,
             market_data_fresh=market_data_fresh,
             strategy_pause_reason=strategy_pause_reason,

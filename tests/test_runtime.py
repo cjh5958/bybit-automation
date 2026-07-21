@@ -76,6 +76,31 @@ def test_runtime_closing_risk_order_is_dry_run_only() -> None:
     assert report.order_results[0].intent.amount == 1
 
 
+def test_runtime_skips_risk_when_risk_defaults_disabled() -> None:
+    raw = valid_raw_config()
+    raw["risk"]["defaults"]["enabled"] = False
+    raw["symbols"] = [{"symbol": "MOODENG/USDT:USDT", "enabled": True}]
+    config = parse_config(raw, resolve_secrets=False)
+    exchange = FakeExchange(
+        positions=[
+            Position(
+                symbol="MOODENG/USDT:USDT",
+                side="long",
+                size=1,
+                entry_price=100,
+                mark_price=98,
+            )
+        ]
+    )
+    runtime = BotRuntime(config, exchange=exchange)
+
+    report = runtime.run_once()
+
+    assert report.ran_risk is False
+    assert report.risk_decisions == ()
+    assert report.order_results == ()
+
+
 def test_runtime_skips_strategy_for_active_position_symbol() -> None:
     raw = valid_raw_config()
     raw["symbols"] = [{"symbol": "MOODENG/USDT:USDT", "enabled": True}]
