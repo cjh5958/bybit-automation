@@ -135,3 +135,30 @@ Rules:
 - [x] Add circuit breakers for repeated failures.
 - [x] Add dry-run verification flow.
 - [x] Add deployment notes or helpers when runtime shape is stable.
+
+## Demo Validation / Release Candidate
+
+- [x] Document the staged testing, release, and architecture evolution plan in
+  `.agents/TESTING_AND_ARCHITECTURE_PLAN.md`.
+- [ ] Restore the current development environment with `uv` and run the offline baseline.
+- [ ] Re-run and record the dry-run verification against the current commit.
+- [ ] Add a Bybit Demo read-only preflight command with zero exchange side effects.
+- [ ] Separate exchange environment selection from order execution permission.
+- [ ] Add Demo shadow mode with real reads and blocked exchange writes.
+- [ ] Add client order IDs and idempotent ambiguous-order recovery.
+- [ ] Verify `reduceOnly` and Bybit position-mode behavior before automated closing.
+- [ ] Schedule periodic reconciliation using `reconciliation_interval_sec`.
+- [ ] Integrate retry/backoff and circuit breakers into explicitly safe runtime operations.
+- [ ] Add an external operational notification channel and kill switch.
+- [ ] Run an approved single-symbol Demo order lifecycle test.
+- [ ] Run restart, network, Redis, SQLite, stale-data, and duplicate-event fault drills.
+- [ ] Complete a 72-hour Demo soak test and record Release Candidate evidence.
+
+## Architecture Evolution
+
+- [x] Choose modular monolith as the current architecture and document the decision.
+- [ ] Define stable internal command and event contracts before splitting processes.
+- [ ] Add transaction outbox/inbox semantics before adopting asynchronous service commands.
+- [ ] Re-evaluate a three-service split after the Demo Release Candidate gates pass.
+- [ ] Replace shared SQLite with a multi-process durable store before distributed deployment.
+- [ ] Preserve one fenced exchange writer per account in every future architecture.

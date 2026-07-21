@@ -1,0 +1,16 @@
+# Demo Validation / Release Candidate Log
+
+## 2026-07-20 Planning
+
+- Added `.agents/TESTING_AND_ARCHITECTURE_PLAN.md` with Gate 0 through Gate 7
+  validation criteria, safety boundaries, required evidence, and release gates.
+- Documented the current architecture decision:
+  - retain the modular monolith through Demo Release Candidate validation,
+  - consider a three-service coarse-grained split only after safety gates pass,
+  - defer fine-grained microservices until scaling or ownership requirements are measurable.
+- Updated `.agents/TODO.md` with the Demo Validation and Architecture Evolution work.
+- Current environment limitation:
+  - `uv` is not available on `PATH`,
+  - no local runtime config or Bybit credentials are present,
+  - no tests or Bybit network checks were run during this documentation task.
+- No exchange connection was opened and no trading side effect was performed.

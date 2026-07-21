@@ -1016,6 +1016,9 @@ strictly needed to prove persistence; those belong to Phase 3.
 
 Start a Demo Validation / Release Candidate stage:
 
+The executable gate definitions, required evidence, and architecture evolution
+decision are documented in `.agents/TESTING_AND_ARCHITECTURE_PLAN.md`.
+
 1. Run local `bybit-automation verify-dry-run --config ...` before any network
    test.
 2. Add a Bybit demo read-only preflight command that checks credentials, ticker,
